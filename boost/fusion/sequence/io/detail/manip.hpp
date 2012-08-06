@@ -146,10 +146,6 @@ namespace boost { namespace fusion
             }
 
             Stream& stream;
-
-        private:
-            // silence MSVC warning C4512: assignment operator could not be generated
-            string_ios_manip& operator= (string_ios_manip const&);
         };
 
     } // detail

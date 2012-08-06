@@ -17,36 +17,36 @@
 
 namespace boost
 {
-    template <class K,
+    template <class Key,
         class T,
-        class H = hash<K>,
-        class P = std::equal_to<K>,
-        class A = std::allocator<std::pair<const K, T> > >
+        class Hash = hash<Key>,
+        class Pred = std::equal_to<Key>,
+        class Alloc = std::allocator<std::pair<const Key, T> > >
     class unordered_map;
     template <class K, class T, class H, class P, class A>
-    inline bool operator==(unordered_map<K, T, H, P, A> const&,
+    bool operator==(unordered_map<K, T, H, P, A> const&,
         unordered_map<K, T, H, P, A> const&);
     template <class K, class T, class H, class P, class A>
-    inline bool operator!=(unordered_map<K, T, H, P, A> const&,
+    bool operator!=(unordered_map<K, T, H, P, A> const&,
         unordered_map<K, T, H, P, A> const&);
     template <class K, class T, class H, class P, class A>
-    inline void swap(unordered_map<K, T, H, P, A>&,
+    void swap(unordered_map<K, T, H, P, A>&,
             unordered_map<K, T, H, P, A>&);
 
-    template <class K,
+    template <class Key,
         class T,
-        class H = hash<K>,
-        class P = std::equal_to<K>,
-        class A = std::allocator<std::pair<const K, T> > >
+        class Hash = hash<Key>,
+        class Pred = std::equal_to<Key>,
+        class Alloc = std::allocator<std::pair<const Key, T> > >
     class unordered_multimap;
     template <class K, class T, class H, class P, class A>
-    inline bool operator==(unordered_multimap<K, T, H, P, A> const&,
+    bool operator==(unordered_multimap<K, T, H, P, A> const&,
         unordered_multimap<K, T, H, P, A> const&);
     template <class K, class T, class H, class P, class A>
-    inline bool operator!=(unordered_multimap<K, T, H, P, A> const&,
+    bool operator!=(unordered_multimap<K, T, H, P, A> const&,
         unordered_multimap<K, T, H, P, A> const&);
     template <class K, class T, class H, class P, class A>
-    inline void swap(unordered_multimap<K, T, H, P, A>&,
+    void swap(unordered_multimap<K, T, H, P, A>&,
             unordered_multimap<K, T, H, P, A>&);
 }
 

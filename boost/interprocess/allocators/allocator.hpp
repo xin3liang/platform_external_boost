@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2005-2009. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2008. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -22,7 +22,6 @@
 
 #include <boost/interprocess/interprocess_fwd.hpp>
 #include <boost/interprocess/containers/allocation_type.hpp>
-#include <boost/interprocess/containers/container/detail/multiallocation_chain.hpp>
 #include <boost/interprocess/allocators/detail/allocator_common.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
 #include <boost/interprocess/containers/version_type.hpp>
@@ -103,7 +102,7 @@ class allocator
    /// @cond
 
    //Experimental. Don't use.
-   typedef boost::container::containers_detail::transform_multiallocation_chain
+   typedef boost::interprocess::detail::transform_multiallocation_chain
       <typename SegmentManager::multiallocation_chain, T>multiallocation_chain;
    /// @endcond
 

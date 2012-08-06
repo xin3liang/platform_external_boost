@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2005-2009.
+// (C) Copyright Ion Gaztanaga 2005-2008.
 //
 // Distributed under the Boost Software License, Version 1.0.
 // (See accompanying file LICENSE_1_0.txt or copy at
@@ -17,25 +17,25 @@
 #  pragma once
 #endif
 
-#include "config_begin.hpp"
-#include INCLUDE_BOOST_CONTAINER_DETAIL_WORKAROUND_HPP
+#include <boost/interprocess/containers/container/detail/config_begin.hpp>
+#include <boost/interprocess/containers/container/detail/workaround.hpp>
 
 #include <boost/type_traits/has_trivial_copy.hpp>
 #include <boost/type_traits/has_trivial_assign.hpp>
 #include <boost/detail/no_exceptions_support.hpp>
 #include <boost/get_pointer.hpp>
 
-#include INCLUDE_BOOST_CONTAINER_DETAIL_TYPE_TRAITS_HPP
-#include INCLUDE_BOOST_CONTAINER_DETAIL_MPL_HPP
-#include INCLUDE_BOOST_CONTAINER_DETAIL_ITERATORS_HPP
+#include <boost/interprocess/containers/container/detail/type_traits.hpp>
+#include <boost/interprocess/containers/container/detail/mpl.hpp>
+#include <boost/interprocess/containers/container/detail/iterators.hpp>
 
 
 #include <cstring>
 
 namespace boost {
-namespace container { 
+namespace interprocess_container { 
 
-#if defined(BOOST_NO_RVALUE_REFERENCES)
+#if !defined(BOOST_HAS_RVALUE_REFS)
 template<class T>
 struct has_own_construct_from_it
 {
@@ -206,10 +206,10 @@ FwdIt uninitialized_copy_copy
    BOOST_CATCH_END
 }
 
-}  //namespace container { 
+}  //namespace interprocess_container { 
 }  //namespace boost {
 
-#include INCLUDE_BOOST_CONTAINER_DETAIL_CONFIG_END_HPP
+#include <boost/interprocess/containers/container/detail/config_end.hpp>
 
 #endif   //#ifndef BOOST_CONTAINERS_DETAIL_ALGORITHMS_HPP
 

@@ -1,28 +1,44 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2005-2009. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2008. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 // See http://www.boost.org/libs/container for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
+//
+// This file comes from SGI's string file. Modified by Ion Gaztanaga 2004-2008
+// Renaming, isolating and porting to generic algorithms. Pointer typedef 
+// set to allocator::pointer to allow placing it in shared memory.
+//
+///////////////////////////////////////////////////////////////////////////////
+// Copyright (c) 1994
+// Hewlett-Packard Company
+// 
+// Permission to use, copy, modify, distribute and sell this software
+// and its documentation for any purpose is hereby granted without fee,
+// provided that the above copyright notice appear in all copies and
+// that both that copyright notice and this permission notice appear
+// in supporting documentation.  Hewlett-Packard Company makes no
+// representations about the suitability of this software for any
+// purpose.  It is provided "as is" without express or implied warranty.
 
 #ifndef BOOST_CONTAINERS_STRING_HPP
 #define BOOST_CONTAINERS_STRING_HPP
 
-#include "detail/config_begin.hpp"
-#include INCLUDE_BOOST_CONTAINER_DETAIL_WORKAROUND_HPP
+#include <boost/interprocess/containers/container/detail/config_begin.hpp>
+#include <boost/interprocess/containers/container/detail/workaround.hpp>
 
-#include INCLUDE_BOOST_CONTAINER_DETAIL_WORKAROUND_HPP
-#include INCLUDE_BOOST_CONTAINER_CONTAINER_FWD_HPP
-#include INCLUDE_BOOST_CONTAINER_DETAIL_UTILITIES_HPP
-#include INCLUDE_BOOST_CONTAINER_DETAIL_ITERATORS_HPP
-#include INCLUDE_BOOST_CONTAINER_DETAIL_ALGORITHMS_HPP
-#include INCLUDE_BOOST_CONTAINER_DETAIL_VERSION_TYPE_HPP
-#include INCLUDE_BOOST_CONTAINER_DETAIL_ALLOCATION_TYPE_HPP
-#include INCLUDE_BOOST_CONTAINER_DETAIL_MPL_HPP
-#include INCLUDE_BOOST_CONTAINER_MOVE_HPP
+#include <boost/interprocess/containers/container/detail/workaround.hpp>
+#include <boost/interprocess/containers/container/containers_fwd.hpp>
+#include <boost/interprocess/containers/container/detail/utilities.hpp>
+#include <boost/interprocess/containers/container/detail/iterators.hpp>
+#include <boost/interprocess/containers/container/detail/algorithms.hpp>
+#include <boost/interprocess/containers/container/detail/version_type.hpp>
+#include <boost/interprocess/containers/container/detail/allocation_type.hpp>
+#include <boost/interprocess/containers/container/detail/mpl.hpp>
+#include <boost/interprocess/detail/move.hpp>
 #include <boost/static_assert.hpp>
 
 #include <functional>
@@ -39,16 +55,16 @@
 #include <locale>
 #include <cstddef>
 #include <climits>
-#include INCLUDE_BOOST_CONTAINER_DETAIL_TYPE_TRAITS_HPP
+#include <boost/interprocess/containers/container/detail/type_traits.hpp>
 #include <boost/detail/no_exceptions_support.hpp>
 #include <boost/type_traits/has_trivial_destructor.hpp>
 
-#ifdef BOOST_CONTAINER_DOXYGEN_INVOKED
+#ifdef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 namespace boost {
-namespace container {
+namespace interprocess {
 #else
 namespace boost {
-namespace container {
+namespace interprocess_container {
 #endif
 
 /// @cond
@@ -67,9 +83,12 @@ template <class A>
 class basic_string_base
 {
    basic_string_base();
-   BOOST_MOVE_MACRO_MOVABLE_BUT_NOT_COPYABLE(basic_string_base)
+   basic_string_base(basic_string_base&);
+   basic_string_base & operator=(basic_string_base&);
 
  public:
+   BOOST_INTERPROCESS_ENABLE_MOVE_EMULATION(basic_string_base)
+
    typedef A allocator_type;
    //! The stored allocator type
    typedef allocator_type                          stored_allocator_type;
@@ -88,7 +107,7 @@ class basic_string_base
       this->allocate_initial_block(n);
    }
 
-   basic_string_base(BOOST_MOVE_MACRO_RV_REF(basic_string_base) b)
+   basic_string_base(BOOST_INTERPROCESS_RV_REF(basic_string_base) b)
       :  members_(b.members_)
    {  
       init();
@@ -237,7 +256,7 @@ class basic_string_base
    typedef containers_detail::integral_constant<unsigned, 1>      allocator_v1;
    typedef containers_detail::integral_constant<unsigned, 2>      allocator_v2;
    typedef containers_detail::integral_constant<unsigned,
-      boost::container::containers_detail::version<A>::value> alloc_version;
+      boost::interprocess_container::containers_detail::version<A>::value> alloc_version;
 
    std::pair<pointer, bool>
       allocation_command(allocation_type command,
@@ -264,7 +283,7 @@ class basic_string_base
       (void)limit_size;
       (void)reuse;
       if(!(command & allocate_new))
-         return std::pair<pointer, bool>(pointer(0), false);
+         return std::pair<pointer, bool>(pointer(0), 0);
       received_size = preferred_size;
       return std::make_pair(this->alloc().allocate(received_size), false);
    }
@@ -429,7 +448,6 @@ class basic_string
 {
    /// @cond
    private:
-   BOOST_MOVE_MACRO_COPYABLE_AND_MOVABLE(basic_string)
    typedef containers_detail::basic_string_base<A> base_t;
    static const typename base_t::size_type InternalBufferChars = base_t::InternalBufferChars;
 
@@ -467,6 +485,7 @@ class basic_string
    /// @endcond
 
    public:
+   BOOST_INTERPROCESS_ENABLE_MOVE_EMULATION(basic_string)
 
    //! The allocator type
    typedef A                                       allocator_type;
@@ -535,8 +554,8 @@ class basic_string
    //! <b>Throws</b>: If allocator_type's copy constructor throws.
    //! 
    //! <b>Complexity</b>: Constant.
-   basic_string(BOOST_MOVE_MACRO_RV_REF(basic_string) s) 
-      : base_t(BOOST_CONTAINER_MOVE_NAMESPACE::move((base_t&)s))
+   basic_string(BOOST_INTERPROCESS_RV_REF(basic_string) s) 
+      : base_t(boost::interprocess::move((base_t&)s))
    {}
 
    //! <b>Effects</b>: Constructs a basic_string taking the allocator as parameter,
@@ -602,7 +621,7 @@ class basic_string
    //! <b>Postcondition</b>: x == *this.
    //! 
    //! <b>Complexity</b>: Linear to the elements x contains.
-   basic_string& operator=(BOOST_MOVE_MACRO_COPY_ASSIGN_REF(basic_string) s)
+   basic_string& operator=(const basic_string& s)
    {
       if (&s != this) 
          this->assign(s.begin(), s.end());
@@ -614,7 +633,7 @@ class basic_string
    //! <b>Throws</b>: If allocator_type's copy constructor throws.
    //! 
    //! <b>Complexity</b>: Constant.
-   basic_string& operator=(BOOST_MOVE_MACRO_RV_REF(basic_string) ms)
+   basic_string& operator=(BOOST_INTERPROCESS_RV_REF(basic_string) ms)
    {
       basic_string &s = ms;
       if (&s != this){
@@ -931,7 +950,7 @@ class basic_string
    {  return this->operator=(s); }
 
    //! <b>Effects</b>: Moves the resources from ms *this.
-   basic_string& assign(BOOST_MOVE_MACRO_RV_REF(basic_string) ms) 
+   basic_string& assign(BOOST_INTERPROCESS_RV_REF(basic_string) ms) 
    {  return this->operator=(ms);}
 
    //! <b>Effects</b>: Assigns the range [pos, pos + n) from s to *this.
@@ -1855,22 +1874,6 @@ class basic_string
    /// @endcond
 };
 
-//!Typedef for a basic_string of
-//!narrow characters
-typedef basic_string
-   <char
-   ,std::char_traits<char>
-   ,std::allocator<char> >
-string;
-
-//!Typedef for a basic_string of
-//!narrow characters
-typedef basic_string
-   <wchar_t
-   ,std::char_traits<wchar_t>
-   ,std::allocator<wchar_t> >
-wstring;
-
 /// @cond
 
 template <class CharT, class Traits, class A> 
@@ -1900,19 +1903,19 @@ operator+(const basic_string<CharT,Traits,A>& x,
 }
 
 template <class CharT, class Traits, class A> inline
-BOOST_MOVE_MACRO_RV_REF_3_TEMPL_ARGS(basic_string, CharT, Traits, A)
+BOOST_INTERPROCESS_RV_REF_3_TEMPL_ARGS(basic_string, CharT, Traits, A)
    operator+(
-   BOOST_MOVE_MACRO_RV_REF_3_TEMPL_ARGS(basic_string, CharT, Traits, A) mx
+   BOOST_INTERPROCESS_RV_REF_3_TEMPL_ARGS(basic_string, CharT, Traits, A) mx
    , const basic_string<CharT,Traits,A>& y)
 {
    mx += y;
-   return BOOST_CONTAINER_MOVE_NAMESPACE::move(mx);
+   return boost::interprocess::move(mx);
 }
 
 template <class CharT, class Traits, class A> inline
-BOOST_MOVE_MACRO_RV_REF_3_TEMPL_ARGS(basic_string, CharT, Traits, A)
+BOOST_INTERPROCESS_RV_REF_3_TEMPL_ARGS(basic_string, CharT, Traits, A)
    operator+(const basic_string<CharT,Traits,A>& x,
-         BOOST_MOVE_MACRO_RV_REF_3_TEMPL_ARGS(basic_string, CharT, Traits, A) my)
+         BOOST_INTERPROCESS_RV_REF_3_TEMPL_ARGS(basic_string, CharT, Traits, A) my)
 {
    typedef typename basic_string<CharT,Traits,A>::size_type size_type;
    return my.replace(size_type(0), size_type(0), x);
@@ -1933,12 +1936,12 @@ operator+(const CharT* s, const basic_string<CharT,Traits,A>& y)
 }
 
 template <class CharT, class Traits, class A> inline
-BOOST_MOVE_MACRO_RV_REF_3_TEMPL_ARGS(basic_string, CharT, Traits, A)
+BOOST_INTERPROCESS_RV_REF_3_TEMPL_ARGS(basic_string, CharT, Traits, A)
 operator+(const CharT* s,
-         BOOST_MOVE_MACRO_RV_REF_3_TEMPL_ARGS(basic_string, CharT, Traits, A) my)
+         BOOST_INTERPROCESS_RV_REF_3_TEMPL_ARGS(basic_string, CharT, Traits, A) my)
 {
    typedef typename basic_string<CharT,Traits,A>::size_type size_type;
-   return BOOST_CONTAINER_MOVE_NAMESPACE::move(my.get().replace(size_type(0), size_type(0), s));
+   return boost::interprocess::move(my.get().replace(size_type(0), size_type(0), s));
 }
 
 template <class CharT, class Traits, class A>
@@ -1955,9 +1958,9 @@ operator+(CharT c, const basic_string<CharT,Traits,A>& y)
 }
 
 template <class CharT, class Traits, class A> inline
-BOOST_MOVE_MACRO_RV_REF_3_TEMPL_ARGS(basic_string, CharT, Traits, A)
+BOOST_INTERPROCESS_RV_REF_3_TEMPL_ARGS(basic_string, CharT, Traits, A)
 operator+(CharT c,
-         BOOST_MOVE_MACRO_RV_REF_3_TEMPL_ARGS(basic_string, CharT, Traits, A) my)
+         BOOST_INTERPROCESS_RV_REF_3_TEMPL_ARGS(basic_string, CharT, Traits, A) my)
 {
    typedef typename basic_string<CharT,Traits,A>::size_type size_type;
    return my.replace(size_type(0), size_type(0), &c, &c + 1);
@@ -1978,12 +1981,12 @@ operator+(const basic_string<CharT,Traits,A>& x, const CharT* s)
 }
 
 template <class CharT, class Traits, class A>
-BOOST_MOVE_MACRO_RV_REF_3_TEMPL_ARGS(basic_string, CharT, Traits, A)
-operator+(BOOST_MOVE_MACRO_RV_REF_3_TEMPL_ARGS(basic_string, CharT, Traits, A) mx
+BOOST_INTERPROCESS_RV_REF_3_TEMPL_ARGS(basic_string, CharT, Traits, A)
+operator+(BOOST_INTERPROCESS_RV_REF_3_TEMPL_ARGS(basic_string, CharT, Traits, A) mx
          , const CharT* s)
 {
    mx += s;
-   return BOOST_CONTAINER_MOVE_NAMESPACE::move(mx);
+   return boost::interprocess::move(mx);
 }
 
 template <class CharT, class Traits, class A>
@@ -2000,12 +2003,12 @@ operator+(const basic_string<CharT,Traits,A>& x, const CharT c)
 }
 
 template <class CharT, class Traits, class A>
-BOOST_MOVE_MACRO_RV_REF_3_TEMPL_ARGS(basic_string, CharT, Traits, A)
-operator+( BOOST_MOVE_MACRO_RV_REF_3_TEMPL_ARGS(basic_string, CharT, Traits, A) mx
+BOOST_INTERPROCESS_RV_REF_3_TEMPL_ARGS(basic_string, CharT, Traits, A)
+operator+( BOOST_INTERPROCESS_RV_REF_3_TEMPL_ARGS(basic_string, CharT, Traits, A) mx
          , const CharT c)
 {
    mx += c;
-   return BOOST_CONTAINER_MOVE_NAMESPACE::move(mx);
+   return boost::interprocess::move(mx);
 }
 
 // Operator== and operator!=
@@ -2257,6 +2260,7 @@ getline(std::istream& is, basic_string<CharT,Traits,A>& s,CharT delim)
       std::basic_streambuf<CharT, Traits>* buf = is.rdbuf();
       s.clear();
 
+      int c1;
       while (nread < s.max_size()) {
          int c1 = buf->sbumpc();
          if (Traits::eq_int_type(c1, Traits::eof())) {
@@ -2297,19 +2301,20 @@ inline std::size_t hash_value(basic_string<Ch, std::char_traits<Ch>, A> const& v
 /// @cond
 
 namespace boost {
-/*
+namespace interprocess {
+
 //!has_trivial_destructor_after_move<> == true_type
 //!specialization for optimizations
 template <class C, class T, class A>
-struct has_trivial_destructor_after_move<boost::container::basic_string<C, T, A> >
+struct has_trivial_destructor_after_move<boost::interprocess_container::basic_string<C, T, A> >
 {
    static const bool value = has_trivial_destructor<A>::value;
 };
-*/
-}
+
+}}
 
 /// @endcond
 
-#include INCLUDE_BOOST_CONTAINER_DETAIL_CONFIG_END_HPP
+#include <boost/interprocess/containers/container/detail/config_end.hpp>
 
 #endif // BOOST_CONTAINERS_STRING_HPP

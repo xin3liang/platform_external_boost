@@ -10,12 +10,6 @@
 
 #include <boost/fusion/support/detail/access.hpp>
 #include <boost/fusion/support/detail/as_fusion_element.hpp>
-#include <boost/config.hpp>
-
-#if defined (BOOST_MSVC)
-#  pragma warning(push)
-#  pragma warning (disable: 4512) // assignment operator could not be generated.
-#endif
 
 namespace boost { namespace fusion
 {
@@ -104,9 +98,5 @@ namespace boost { namespace fusion
         return l.second != r.second;
     }
 }}
-
-#if defined (BOOST_MSVC)
-#  pragma warning(pop)
-#endif
 
 #endif

@@ -13,9 +13,9 @@
 #include <cstring>
 #include <string>
 #include <list>
-#include "bcp.hpp"
 #include <boost/filesystem/path.hpp>
 #include <boost/version.hpp>
+#include "bcp.hpp"
 
 #ifdef BOOST_NO_STDC_NAMESPACE
 namespace std{
@@ -34,17 +34,15 @@ void show_usage()
       "   bcp [options] module-list output-path\n"
       "\n"
       "Options:\n"
-      "   --boost=path     sets the location of the boost tree to path\n"
-      "   --scan           treat the module list as a list of (possibly non-boost)\n" 
-      "                    files to scan for boost dependencies\n"
-      "   --svn            only copy files under cvs version control\n"
-      "   --unix-lines     make sure that all copied files use Unix style line endings\n"
-      "   --namespace=name rename the boost namespace to name (also changes library names).\n"
-      "   --namespace-alias Makes namespace boost an alias of the namespace set with --namespace.\n"
+      "   --boost=path   sets the location of the boost tree to path\n"
+      "   --scan         treat the module list as a list of (possibly non-boost)\n" 
+      "                  files to scan for boost dependencies\n"
+      "   --cvs          only copy files under cvs version control\n"
+      "   --unix-lines   make sure that all copied files use Unix style line endings\n"
       "\n"
-      "module-list:         a list of boost files or library names to copy\n"
-      "html-file:           the name of a html file to which the report will be written\n"
-      "output-path:         the path to which files will be copied\n";
+      "module-list:      a list of boost files or library names to copy\n"
+      "html-file:        the name of a html file to which the report will be written\n"
+      "output-path:      the path to which files will be copied\n";
 }
 
 bool filesystem_name_check( const std::string & name )
@@ -60,15 +58,14 @@ int cpp_main(int argc, char* argv[])
    // with files that already exist, if they're not portable
    // names it's too late for us to do anything about it).
    //
-   /*boost::filesystem::path::default_name_check(filesystem_name_check);*/
+   boost::filesystem::path::default_name_check(filesystem_name_check);
    //
    // without arguments just show help:
    //
    if(argc < 2)
    {
-      std::cout << "Error: insufficient arguments, don't know what to do." << std::endl;
       show_usage();
-      return 1;
+      return 0;
    }
    //
    // create the application object:
@@ -137,22 +134,8 @@ int cpp_main(int argc, char* argv[])
       {
          papp->set_boost_path(argv[i] + 8);
       }
-      else if(0 == std::strncmp("--namespace=", argv[i], 12))
-      {
-         papp->set_namespace(argv[i] + 12);
-      }
-      else if(0 == std::strncmp("--namespace-alias", argv[i], 17))
-      {
-         papp->set_namespace_alias(true);
-      }
-      else if(0 == std::strncmp("--list-namespaces", argv[i], 17))
-      {
-         list_mode = true;
-         papp->set_namespace_list(true);
-      }
       else if(argv[i][0] == '-')
       {
-         std::cout << "Error: Unknown argument " << argv[i] << std::endl;
          show_usage();
          return 1;
       }

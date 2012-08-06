@@ -20,7 +20,7 @@ project status
 import testing ;
 import modules ;
 
-local rule run-tests ( root : tests * )
+local rule run-tests ( tests * )
 {
     local limit-tests = [ MATCH "^--limit-tests=(.*)" : [ modules.peek : ARGV ] ] ;
     for local test in $(tests)
@@ -29,23 +29,23 @@ local rule run-tests ( root : tests * )
         {
             if [ MATCH "^($(limit-tests))" : $(test) ]
             {
-                build-project ../$(root)/$(test) ;
+                build-project ../libs/$(test) ;
             }
             else
             {
-                use-project /boost/$(test) : ../$(root)/$(test) ;
+                use-project /boost/$(test) : ../libs/$(test) ;
             }
         }
         else
         {
-            build-project ../$(root)/$(test) ;
+            build-project ../libs/$(test) ;
         }
     }
 }
 
 # Tests from Jamfiles in individual library test subdirectories
 # Please keep these in alphabetic order by test-suite name
-run-tests libs :
+run-tests
     accumulators/test           # test-suite accumulators
     algorithm/minmax/test       # test-suite algorith/minmax
     algorithm/string/test       # test-suite algorithm/string
@@ -55,14 +55,12 @@ run-tests libs :
     any/test                    # test-suite any
     bimap/test                  # test-suite bimap
     bind/test                   # test-suite bind
-    chrono/test                 # test-suite chrono
     circular_buffer/test        # test-suite circular_buffer
     concept_check               # test-suite concept_check
     config/test                 # test-suite config
     conversion/test             # test-suite conversion
     crc/test                    # test-suite crc
     date_time/test              # test-suite date_time
-    detail/test                 # test-suite detail
     disjoint_sets               # test-suite disjoint_sets
     dynamic_bitset              # test-suite dynamic_bitset
     exception/test
@@ -72,16 +70,12 @@ run-tests libs :
     format/test                 # test-suite format
     function/test               # test-suite function
     functional/test             # test-suite functional
-    functional/factory/test     # test-suite functional/factory
-    functional/forward/test     # test-suite functional/forward
     functional/hash/test        # test-suite functional/hash
     function_types/test         # test-suite function_types
     fusion/test                 # test-suite fusion
-    geometry/test               # test-suite geometry
     gil/test                    # test-suite gil
     graph/test                  # test-suite graph
     graph_parallel/test         # test-suite graph/parallel
-    icl/test                    # test-suite icl
     io/test                     # test-suite io
     integer/test                # test-suite integer
     interprocess/example        # test-suite interprocess_example
@@ -95,7 +89,6 @@ run-tests libs :
     math/test                   # test-suite math
     mpi/test                    # test-suite mpi
     mpl/test                    # test-suite mpl
-    msm/test                    # msm-unit-tests
     numeric/conversion/test     # test-suite numeric/conversion
     numeric/interval/test       # test-suite numeric/interval
     numeric/ublas/test          # test-suite numeirc/uBLAS
@@ -103,19 +96,15 @@ run-tests libs :
     multi_index/test            # test-suite multi_index
     optional/test               # test-suite optional
     parameter/test              # test-suite parameter
-    phoenix/test                # test-suite phoenix
-    polygon/test                # test-suite polygon
     pool/test                   # test-suite pool
     preprocessor/test           # test-suite preprocessor
     program_options/test        # test-suite program_options
     property_map/test           # test-suite property_map
-    property_tree/test          # test-suite property_test
     proto/test                  # test-suite proto
     ptr_container/test          # test-suite ptr_container
     python/test                 # test-suite python
     random/test                 # test-suite random
     range/test                  # test-suite range
-    ratio/test                  # test-suite ratio
     rational/test               # test-suite rational
     regex/test                  # test-suite regex
     regex/example               # test-suite regex-examples
@@ -126,7 +115,6 @@ run-tests libs :
     smart_ptr/test              # test-suite smart_ptr
     spirit/classic/test         # test-suite classic spirit
     spirit/test                 # test-suite spirit_v2
-    spirit/repository/test      # test-suite spirit_v2 repository
     statechart/test             # test-suite statechart
     static_assert               # test-suite static_assert
     system/test                 # test-suite system
@@ -144,12 +132,7 @@ run-tests libs :
     utility/enable_if/test      # test-suite utility/enable_if
     utility/swap/test           # test-suite utility/swap
     utility/test                # test-suite utility
-    uuid/test                   # test-suite uuid
     variant/test                # test-suite variant
     wave/test/build             # test-suite wave
     xpressive/test              # test-suite xpressive
-    ;
-
-run-tests tools :
-    bcp/test
     ;

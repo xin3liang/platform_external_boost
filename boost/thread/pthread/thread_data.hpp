@@ -12,9 +12,7 @@
 #include <boost/thread/mutex.hpp>
 #include <boost/optional.hpp>
 #include <pthread.h>
-#include <boost/assert.hpp>
 #include "condition_variable_fwd.hpp"
-#include <map>
 
 #include <boost/config/abi_prefix.hpp>
 
@@ -24,18 +22,8 @@ namespace boost
     
     namespace detail
     {
-        struct tss_cleanup_function;
         struct thread_exit_callback_node;
-        struct tss_data_node
-        {
-            boost::shared_ptr<boost::detail::tss_cleanup_function> func;
-            void* value;
-
-            tss_data_node(boost::shared_ptr<boost::detail::tss_cleanup_function> func_,
-                          void* value_):
-                func(func_),value(value_)
-            {}
-        };
+        struct tss_data_node;
 
         struct thread_data_base;
         typedef boost::shared_ptr<thread_data_base> thread_data_ptr;
@@ -53,15 +41,14 @@ namespace boost
             bool join_started;
             bool joined;
             boost::detail::thread_exit_callback_node* thread_exit_callbacks;
-            std::map<void const*,boost::detail::tss_data_node> tss_data;
+            boost::detail::tss_data_node* tss_data;
             bool interrupt_enabled;
             bool interrupt_requested;
-            pthread_mutex_t* cond_mutex;
             pthread_cond_t* current_cond;
 
             thread_data_base():
                 done(false),join_started(false),joined(false),
-                thread_exit_callbacks(0),
+                thread_exit_callbacks(0),tss_data(0),
                 interrupt_enabled(true),
                 interrupt_requested(false),
                 current_cond(0)
@@ -78,8 +65,6 @@ namespace boost
         class interruption_checker
         {
             thread_data_base* const thread_info;
-            pthread_mutex_t* m;
-            bool set;
 
             void check_for_interruption()
             {
@@ -92,35 +77,23 @@ namespace boost
             
             void operator=(interruption_checker&);
         public:
-            explicit interruption_checker(pthread_mutex_t* cond_mutex,pthread_cond_t* cond):
-                thread_info(detail::get_current_thread_data()),m(cond_mutex),
-                set(thread_info && thread_info->interrupt_enabled)
+            explicit interruption_checker(pthread_cond_t* cond):
+                thread_info(detail::get_current_thread_data())
             {
-                if(set)
+                if(thread_info && thread_info->interrupt_enabled)
                 {
                     lock_guard<mutex> guard(thread_info->data_mutex);
                     check_for_interruption();
-                    thread_info->cond_mutex=cond_mutex;
                     thread_info->current_cond=cond;
-                    BOOST_VERIFY(!pthread_mutex_lock(m));
-                }
-                else
-                {
-                    BOOST_VERIFY(!pthread_mutex_lock(m));
                 }
             }
             ~interruption_checker()
             {
-                if(set)
+                if(thread_info && thread_info->interrupt_enabled)
                 {
-                    BOOST_VERIFY(!pthread_mutex_unlock(m));
                     lock_guard<mutex> guard(thread_info->data_mutex);
-                    thread_info->cond_mutex=NULL;
                     thread_info->current_cond=NULL;
-                }
-                else
-                {
-                    BOOST_VERIFY(!pthread_mutex_unlock(m));
+                    check_for_interruption();
                 }
             }
         };

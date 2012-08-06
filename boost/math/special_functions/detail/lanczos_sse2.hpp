@@ -12,7 +12,7 @@
 
 #include <emmintrin.h>
 
-#if defined(__GNUC__) || defined(__PGI)
+#ifdef __GNUC__
 #define ALIGN16 __attribute__((aligned(16)))
 #else
 #define ALIGN16 __declspec(align(16))

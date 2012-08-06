@@ -1,33 +1,63 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2005-2009. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2008. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 // See http://www.boost.org/libs/container for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
-
+//
+// This file comes from SGI's stl_tree file. Modified by Ion Gaztanaga 2005.
+// Renaming, isolating and porting to generic algorithms. Pointer typedef 
+// set to allocator::pointer to allow placing it in shared memory.
+//
+///////////////////////////////////////////////////////////////////////////////
+/*
+ *
+ * Copyright (c) 1994
+ * Hewlett-Packard Company
+ *
+ * Permission to use, copy, modify, distribute and sell this software
+ * and its documentation for any purpose is hereby granted without fee,
+ * provided that the above copyright notice appear in all copies and
+ * that both that copyright notice and this permission notice appear
+ * in supporting documentation.  Hewlett-Packard Company makes no
+ * representations about the suitability of this software for any
+ * purpose.  It is provided "as is" without express or implied warranty.
+ *
+ *
+ * Copyright (c) 1996
+ * Silicon Graphics Computer Systems, Inc.
+ *
+ * Permission to use, copy, modify, distribute and sell this software
+ * and its documentation for any purpose is hereby granted without fee,
+ * provided that the above copyright notice appear in all copies and
+ * that both that copyright notice and this permission notice appear
+ * in supporting documentation.  Silicon Graphics makes no
+ * representations about the suitability of this software for any
+ * purpose.  It is provided "as is" without express or implied warranty.
+ *
+ */
 #ifndef BOOST_CONTAINERS_TREE_HPP
 #define BOOST_CONTAINERS_TREE_HPP
 
-#include "config_begin.hpp"
-#include INCLUDE_BOOST_CONTAINER_DETAIL_WORKAROUND_HPP
-#include INCLUDE_BOOST_CONTAINER_CONTAINER_FWD_HPP
+#include <boost/interprocess/containers/container/detail/config_begin.hpp>
+#include <boost/interprocess/containers/container/detail/workaround.hpp>
 
-#include INCLUDE_BOOST_CONTAINER_MOVE_HPP
+#include <boost/interprocess/detail/move.hpp>
 #include <boost/pointer_to_other.hpp>
 #include <boost/type_traits/has_trivial_destructor.hpp>
 #include <boost/detail/no_exceptions_support.hpp>
 #include <boost/intrusive/rbtree.hpp>
 
-#include INCLUDE_BOOST_CONTAINER_DETAIL_UTILITIES_HPP
-#include INCLUDE_BOOST_CONTAINER_DETAIL_ALGORITHMS_HPP
-#include INCLUDE_BOOST_CONTAINER_DETAIL_NODE_ALLOC_HOLDER_HPP
-#include INCLUDE_BOOST_CONTAINER_DETAIL_DESTROYERS_HPP
-#include INCLUDE_BOOST_CONTAINER_DETAIL_PAIR_HPP
+#include <boost/interprocess/containers/container/detail/utilities.hpp>
+#include <boost/interprocess/containers/container/detail/algorithms.hpp>
+#include <boost/interprocess/containers/container/detail/node_alloc_holder.hpp>
+#include <boost/interprocess/containers/container/detail/destroyers.hpp>
+#include <boost/interprocess/containers/container/detail/pair.hpp>
 #ifndef BOOST_CONTAINERS_PERFECT_FORWARDING
-#include INCLUDE_BOOST_CONTAINER_DETAIL_PREPROCESSOR_HPP
+#include <boost/interprocess/containers/container/detail/preprocessor.hpp>
 #endif
 
 #include <utility>   //std::pair
@@ -35,7 +65,7 @@
 #include <algorithm>
 
 namespace boost {
-namespace container {
+namespace interprocess_container {
 namespace containers_detail {
 
 template<class Key, class Value, class KeyCompare, class KeyOfValue>
@@ -122,7 +152,7 @@ struct rbtree_node
 
    template<class ...Args>
    rbtree_node(Args &&...args)
-      : m_data(BOOST_CONTAINER_MOVE_NAMESPACE::forward<Args>(args)...)
+      : m_data(boost::interprocess::forward<Args>(args)...)
    {}
    #endif//#ifndef BOOST_CONTAINERS_PERFECT_FORWARDING
 
@@ -164,15 +194,15 @@ struct rbtree_node
 
    public:
    template<class Convertible>
-   static void construct(node_type *ptr, BOOST_MOVE_MACRO_FWD_REF(Convertible) convertible)
-   {  new(ptr) node_type(BOOST_CONTAINER_MOVE_NAMESPACE::forward<Convertible>(convertible));  }
+   static void construct(node_type *ptr, BOOST_INTERPROCESS_FWD_REF(Convertible) convertible)
+   {  new(ptr) node_type(boost::interprocess::forward<Convertible>(convertible));  }
 };
 
 }//namespace containers_detail {
-#if defined(BOOST_NO_RVALUE_REFERENCES)
+#if !defined(BOOST_HAS_RVALUE_REFS)
 template<class T, class VoidPointer>
 struct has_own_construct_from_it
-   < boost::container::containers_detail::rbtree_node<T, VoidPointer> >
+   < boost::interprocess_container::containers_detail::rbtree_node<T, VoidPointer> >
 {
    static const bool value = true;
 };
@@ -267,9 +297,9 @@ class rbtree
       AllocHolder &m_holder;
       Icont &m_icont;
    };
-   BOOST_MOVE_MACRO_COPYABLE_AND_MOVABLE(rbtree)
 
    public:
+   BOOST_INTERPROCESS_ENABLE_MOVE_EMULATION(rbtree)
 
    typedef Key                                        key_type;
    typedef Value                                      value_type;
@@ -421,15 +451,6 @@ class rbtree
       priv_create_and_insert_nodes(first, last, unique_insertion, alloc_version(), ItCat());
    }
 
-   template <class InputIterator>
-   rbtree( ordered_range_t, InputIterator first, InputIterator last
-         , const key_compare& comp = key_compare(), const allocator_type& a = allocator_type())
-      : AllocHolder(a, comp)
-   {
-      typedef typename std::iterator_traits<InputIterator>::iterator_category ItCat;
-      priv_create_and_insert_ordered_nodes(first, last, alloc_version(), ItCat());
-   }
-
    rbtree(const rbtree& x) 
       :  AllocHolder(x, x.key_comp())
    {
@@ -437,14 +458,14 @@ class rbtree
          (x.icont(), typename AllocHolder::cloner(*this), Destroyer(this->node_alloc()));
    }
 
-   rbtree(BOOST_MOVE_MACRO_RV_REF(rbtree) x) 
+   rbtree(BOOST_INTERPROCESS_RV_REF(rbtree) x) 
       :  AllocHolder(x, x.key_comp())
    {  this->swap(x);  }
 
    ~rbtree()
    {} //AllocHolder clears the tree
 
-   rbtree& operator=(BOOST_MOVE_MACRO_COPY_ASSIGN_REF(rbtree) x)
+   rbtree& operator=(const rbtree& x)
    {
       if (this != &x) {
          //Transfer all the nodes to a temporary tree
@@ -469,7 +490,7 @@ class rbtree
       return *this;
    }
 
-   rbtree& operator=(BOOST_MOVE_MACRO_RV_REF(rbtree) mx)
+   rbtree& operator=(BOOST_INTERPROCESS_RV_REF(rbtree) mx)
    {  this->clear(); this->swap(mx);   return *this;  }
 
    public:    
@@ -589,9 +610,9 @@ class rbtree
 
    template<class MovableConvertible>
    iterator insert_unique_commit
-      (BOOST_MOVE_MACRO_FWD_REF(MovableConvertible) mv, insert_commit_data &data)
+      (BOOST_INTERPROCESS_FWD_REF(MovableConvertible) mv, insert_commit_data &data)
    {
-      NodePtr tmp = AllocHolder::create_node(BOOST_CONTAINER_MOVE_NAMESPACE::forward<MovableConvertible>(mv));
+      NodePtr tmp = AllocHolder::create_node(boost::interprocess::forward<MovableConvertible>(mv));
       iiterator it(this->icont().insert_unique_commit(*tmp, data));
       return iterator(it);
    }
@@ -608,7 +629,7 @@ class rbtree
    }
 
    template<class MovableConvertible>
-   std::pair<iterator,bool> insert_unique(BOOST_MOVE_MACRO_FWD_REF(MovableConvertible) mv)
+   std::pair<iterator,bool> insert_unique(BOOST_INTERPROCESS_FWD_REF(MovableConvertible) mv)
    {
       insert_commit_data data;
       std::pair<iterator,bool> ret =
@@ -616,7 +637,7 @@ class rbtree
       if(!ret.second)
          return ret;
       return std::pair<iterator,bool>
-         (this->insert_unique_commit(BOOST_CONTAINER_MOVE_NAMESPACE::forward<MovableConvertible>(mv), data), true);
+         (this->insert_unique_commit(boost::interprocess::forward<MovableConvertible>(mv), data), true);
    }
 
    private:
@@ -652,23 +673,23 @@ class rbtree
 
    template <class... Args>
    iterator emplace_unique(Args&&... args)
-   {  return this->emplace_unique_impl(AllocHolder::create_node(BOOST_CONTAINER_MOVE_NAMESPACE::forward<Args>(args)...));   }
+   {  return this->emplace_unique_impl(AllocHolder::create_node(boost::interprocess::forward<Args>(args)...));   }
 
    template <class... Args>
    iterator emplace_hint_unique(const_iterator hint, Args&&... args)
-   {  return this->emplace_unique_hint_impl(hint, AllocHolder::create_node(BOOST_CONTAINER_MOVE_NAMESPACE::forward<Args>(args)...));   }
+   {  return this->emplace_unique_hint_impl(hint, AllocHolder::create_node(boost::interprocess::forward<Args>(args)...));   }
 
    template <class... Args>
    iterator emplace_equal(Args&&... args)
    {
-      NodePtr p(AllocHolder::create_node(BOOST_CONTAINER_MOVE_NAMESPACE::forward<Args>(args)...));
+      NodePtr p(AllocHolder::create_node(boost::interprocess::forward<Args>(args)...));
       return iterator(this->icont().insert_equal(this->icont().end(), *p));
    }
 
    template <class... Args>
    iterator emplace_hint_equal(const_iterator hint, Args&&... args)
    {
-      NodePtr p(AllocHolder::create_node(BOOST_CONTAINER_MOVE_NAMESPACE::forward<Args>(args)...));
+      NodePtr p(AllocHolder::create_node(boost::interprocess::forward<Args>(args)...));
       return iterator(this->icont().insert_equal(hint.get(), *p));
    }
 
@@ -737,14 +758,14 @@ class rbtree
    }
 
    template<class MovableConvertible>
-   iterator insert_unique(const_iterator hint, BOOST_MOVE_MACRO_FWD_REF(MovableConvertible) mv)
+   iterator insert_unique(const_iterator hint, BOOST_INTERPROCESS_FWD_REF(MovableConvertible) mv)
    {
       insert_commit_data data;
       std::pair<iterator,bool> ret =
          this->insert_unique_check(hint, KeyOfValue()(mv), data);
       if(!ret.second)
          return ret.first;
-      return this->insert_unique_commit(BOOST_CONTAINER_MOVE_NAMESPACE::forward<MovableConvertible>(mv), data);
+      return this->insert_unique_commit(boost::interprocess::forward<MovableConvertible>(mv), data);
    }
 
    template <class InputIterator>
@@ -770,9 +791,9 @@ class rbtree
    }
 
    template<class MovableConvertible>
-   iterator insert_equal(BOOST_MOVE_MACRO_FWD_REF(MovableConvertible) mv)
+   iterator insert_equal(BOOST_INTERPROCESS_FWD_REF(MovableConvertible) mv)
    {
-      NodePtr p(AllocHolder::create_node(BOOST_CONTAINER_MOVE_NAMESPACE::forward<MovableConvertible>(mv)));
+      NodePtr p(AllocHolder::create_node(boost::interprocess::forward<MovableConvertible>(mv)));
       return iterator(this->icont().insert_equal(this->icont().end(), *p));
    }
 
@@ -783,9 +804,9 @@ class rbtree
    }
 
    template<class MovableConvertible>
-   iterator insert_equal(const_iterator hint, BOOST_MOVE_MACRO_FWD_REF(MovableConvertible) mv)
+   iterator insert_equal(const_iterator hint, BOOST_INTERPROCESS_FWD_REF(MovableConvertible) mv)
    {
-      NodePtr p(AllocHolder::create_node(BOOST_CONTAINER_MOVE_NAMESPACE::forward<MovableConvertible>(mv)));
+      NodePtr p(AllocHolder::create_node(boost::interprocess::forward<MovableConvertible>(mv)));
       return iterator(this->icont().insert_equal(hint.get(), *p));
    }
 
@@ -852,6 +873,14 @@ class rbtree
    //Iterator range version
    template<class InpIterator>
    void priv_create_and_insert_nodes
+      (InpIterator beg, InpIterator end, bool unique)
+   {
+      typedef typename std::iterator_traits<InpIterator>::iterator_category ItCat;
+      priv_create_and_insert_nodes(beg, end, unique, alloc_version(), ItCat());
+   }
+
+   template<class InpIterator>
+   void priv_create_and_insert_nodes
       (InpIterator beg, InpIterator end, bool unique, allocator_v1, std::input_iterator_tag)
    {
       if(unique){
@@ -903,52 +932,6 @@ class rbtree
             this->allocate_many_and_construct
                (beg, std::distance(beg, end), insertion_functor(this->icont()));
          }
-      }
-   }
-
-   //Iterator range version
-   template<class InpIterator>
-   void priv_create_and_insert_ordered_nodes
-      (InpIterator beg, InpIterator end, allocator_v1, std::input_iterator_tag)
-   {
-      const_iterator cend_n(this->cend());
-      for (; beg != end; ++beg){
-         this->insert_before(cend_n, *beg);
-      }
-   }
-
-   template<class InpIterator>
-   void priv_create_and_insert_ordered_nodes
-      (InpIterator beg, InpIterator end, allocator_v2, std::input_iterator_tag)
-   {  //Just forward to the default one
-      priv_create_and_insert_ordered_nodes(beg, end, allocator_v1(), std::input_iterator_tag());
-   }
-
-   class back_insertion_functor;
-   friend class back_insertion_functor;
-
-   class back_insertion_functor
-   {
-      Icont &icont_;
-
-      public:
-      back_insertion_functor(Icont &icont)
-         :  icont_(icont)
-      {}
-
-      void operator()(Node &n)
-      {  this->icont_.push_back(n); }
-   };
-
-
-   template<class FwdIterator>
-   void priv_create_and_insert_ordered_nodes
-      (FwdIterator beg, FwdIterator end, allocator_v2, std::forward_iterator_tag)
-   {
-      if(beg != end){
-         //Optimized allocation and construction
-         this->allocate_many_and_construct
-            (beg, std::distance(beg, end), back_insertion_functor(this->icont()));
       }
    }
 };
@@ -1016,20 +999,24 @@ swap(rbtree<Key,Value,KeyOfValue,KeyCompare,A>& x,
 }
 
 } //namespace containers_detail {
-} //namespace container {
-/*
+} //namespace interprocess_container {
+
+namespace interprocess {
+
 //!has_trivial_destructor_after_move<> == true_type
 //!specialization for optimizations
 template <class K, class V, class KOV, 
 class C, class A>
 struct has_trivial_destructor_after_move
-   <boost::container::containers_detail::rbtree<K, V, KOV, C, A> >
+   <boost::interprocess_container::containers_detail::rbtree<K, V, KOV, C, A> >
 {
    static const bool value = has_trivial_destructor<A>::value && has_trivial_destructor<C>::value;
 };
-*/
+
+}  //namespace interprocess {
+
 } //namespace boost  {
 
-#include INCLUDE_BOOST_CONTAINER_DETAIL_CONFIG_END_HPP
+#include <boost/interprocess/containers/container/detail/config_end.hpp>
 
 #endif //BOOST_CONTAINERS_TREE_HPP

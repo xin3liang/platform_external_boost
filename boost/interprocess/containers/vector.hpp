@@ -17,12 +17,11 @@
 
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/containers/container/vector.hpp>
-#include <boost/interprocess/containers/containers_fwd.hpp>
 
 namespace boost {
 namespace interprocess {
 
-using boost::container::vector;
+using boost::interprocess_container::vector;
 
 }  //namespace interprocess {
 }  //namespace boost {

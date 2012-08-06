@@ -3,7 +3,7 @@
 
     http://www.boost.org/
 
-    Copyright (c) 2001-2011 Hartmut Kaiser. Distributed under the Boost
+    Copyright (c) 2001-2009 Hartmut Kaiser. Distributed under the Boost
     Software License, Version 1.0. (See accompanying file
     LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 =============================================================================*/
@@ -138,15 +138,15 @@ int print_copyright()
         "Wave: A Standard conformant C++ preprocessor based on the Boost.Wave library",
         "http://www.boost.org/",
         "",
-        "Copyright (c) 2001-2011 Hartmut Kaiser, Distributed under the Boost",
+        "Copyright (c) 2001-2009 Hartmut Kaiser, Distributed under the Boost",
         "Software License, Version 1.0. (See accompanying file",
         "LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)",
         0
     };
-
+    
     for (int i = 0; 0 != copyright[i]; ++i)
         cout << copyright[i] << endl;
-
+        
     return 0;                       // exit app
 }
 
@@ -216,7 +216,7 @@ namespace cmd_line_utils {
             else {
             // store this path as an user path
                 p->paths.push_back(t);
-            }
+            }            
         }
     };
 
@@ -236,7 +236,7 @@ namespace cmd_line_utils {
             }
             return false;
         }
-
+        
     vector<std::string> options;
     std::string line;
 
@@ -245,7 +245,7 @@ namespace cmd_line_utils {
             std::string::size_type pos = line.find_first_not_of(" \t");
             if (pos == std::string::npos) 
                 continue;
-
+            
         // skip comment lines
             if ('#' != line[pos]) {
             // strip leading and trailing whitespace
@@ -281,7 +281,7 @@ namespace cmd_line_utils {
         }
         return file;
     }
-
+    
 ///////////////////////////////////////////////////////////////////////////////
 }
 
@@ -311,7 +311,7 @@ namespace {
         :   print_time(false), outstrm(outstrm_)
         {
         }
-
+        
         ~auto_stop_watch()
         {
             if (print_time) {
@@ -320,7 +320,7 @@ namespace {
                       << std::endl;
             }
         }
-
+    
         void set_print_time(bool print_time_)
         {
             print_time = print_time_;
@@ -350,7 +350,7 @@ namespace {
                       "end-of-file while writing to the stream\n";
         }
         return result;
-    }
+    }                            
 
     ///////////////////////////////////////////////////////////////////////////
     //  Retrieve the position of a macro definition
@@ -364,7 +364,7 @@ namespace {
         bool is_predefined = false;
         std::vector<typename Context::token_type> parameters;
         typename Context::token_sequence_type definition;
-
+        
         return ctx.get_macro_definition(name, has_parameters, is_predefined, 
             pos, parameters, definition);
     }
@@ -422,7 +422,7 @@ namespace {
 
         return result;
     }
-
+    
     ///////////////////////////////////////////////////////////////////////////
     //  Read one logical line of text
     inline bool 
@@ -468,7 +468,7 @@ namespace {
                     using namespace boost::serialization;
                     iarchive ia(ifs);
                     std::string version;
-                    
+
                     ia >> make_nvp("version", version);  // load version
                     if (version == CPP_VERSION_FULL_STR)
                         ia >> make_nvp("state", ctx);    // load the internal tables from disc
@@ -539,7 +539,7 @@ namespace {
         fs::path macronames_file (boost::wave::util::create_path(filename));
 
         if (macronames_file != "-") {
-            macronames_file = boost::wave::util::complete_path(macronames_file);
+            macronames_file = fs::complete(macronames_file);
             fs::create_directories(boost::wave::util::branch_path(macronames_file));
             macronames_out.open(macronames_file.string().c_str());
             if (!macronames_out.is_open()) {
@@ -560,13 +560,13 @@ namespace {
         for (name_iterator it = ctx.macro_names_begin(); it != end; ++it) 
         {
             typedef std::vector<context_type::token_type> parameters_type;
-
+            
         bool has_pars = false;
         bool predef = false;
         context_type::position_type pos;
         parameters_type pars;
         context_type::token_sequence_type def;
-
+            
             if (ctx.get_macro_definition(*it, has_pars, predef, pos, pars, def))
             {
                 macronames_out << (predef ? "-P" : "-D") << *it;
@@ -596,42 +596,6 @@ namespace {
                 macronames_out << std::endl;
             }
         }
-        return true;
-    }
-
-    ///////////////////////////////////////////////////////////////////////////
-    // list macro invocation counts
-    bool list_macro_counts(context_type const& ctx, std::string filename)
-    {
-    // open file for macro invocation count listing
-        std::ofstream macrocounts_out;
-        fs::path macrocounts_file (boost::wave::util::create_path(filename));
-
-        if (macrocounts_file != "-") {
-            macrocounts_file = boost::wave::util::complete_path(macrocounts_file);
-            fs::create_directories(boost::wave::util::branch_path(macrocounts_file));
-            macrocounts_out.open(macrocounts_file.string().c_str());
-            if (!macrocounts_out.is_open()) {
-                cerr << "wave: could not open file for macro invocation count listing: " 
-                     << macrocounts_file.string() << endl;
-                return false;
-            }
-        }
-        else {
-            macrocounts_out.copyfmt(cout);
-            macrocounts_out.clear(cout.rdstate());
-            static_cast<std::basic_ios<char> &>(macrocounts_out).rdbuf(cout.rdbuf());
-        }
-
-        // list all expanded macro names and their counts in alphabetical order
-        std::map<std::string, std::size_t> const& counts =
-            ctx.get_hooks().get_macro_counts();
-
-        typedef std::map<std::string, std::size_t>::const_iterator iterator;
-        iterator end = counts.end();
-        for (iterator it = counts.begin(); it != end; ++it)
-            macrocounts_out << (*it).first << "," << (*it).second << std::endl;
-
         return true;
     }
 
@@ -666,21 +630,20 @@ int error_count = 0;
                                    std::istreambuf_iterator<char>());
 #endif 
         }
-
+        
     // The preprocessing of the input stream is done on the fly behind the 
     // scenes during iteration over the context_type::iterator_type stream.
     std::ofstream output;
     std::ofstream traceout;
     std::ofstream includelistout;
-    std::ofstream listguardsout;
-
+    
     trace_flags enable_trace = trace_nothing;
-
+    
         if (vm.count("traceto")) {
         // try to open the file, where to put the trace output
         fs::path trace_file (boost::wave::util::create_path(
             vm["traceto"].as<std::string>()));
-
+        
             if (trace_file != "-") {
                 fs::create_directories(boost::wave::util::branch_path(trace_file));
                 traceout.open(trace_file.string().c_str());
@@ -704,7 +667,7 @@ int error_count = 0;
         // try to open the file, where to put the include list 
         fs::path includes_file(boost::wave::util::create_path(
             vm["listincludes"].as<std::string>()));
-
+        
             if (includes_file != "-") {
                 fs::create_directories(boost::wave::util::branch_path(includes_file));
                 includelistout.open(includes_file.string().c_str());
@@ -714,7 +677,7 @@ int error_count = 0;
                     return -1;
                 }
             }
-            enable_trace = trace_flags(enable_trace | trace_includes);
+            enable_trace = trace_includes;
         }
         if ((enable_trace & trace_includes) && !includelistout.is_open()) {
         // by default list included names to std::cout
@@ -723,60 +686,26 @@ int error_count = 0;
             static_cast<std::basic_ios<char> &>(includelistout).
                 rdbuf(cout.rdbuf());
         }
-
-    // Open the stream where to output the list of included file names
-        if (vm.count("listguards")) {
-        // try to open the file, where to put the include list 
-        fs::path listguards_file(boost::wave::util::create_path(
-            vm["listguards"].as<std::string>()));
-
-            if (listguards_file != "-") {
-                fs::create_directories(boost::wave::util::branch_path(listguards_file));
-                listguardsout.open(listguards_file.string().c_str());
-                if (!listguardsout.is_open()) {
-                    cerr << "wave: could not open include guard list file: " 
-                         << listguards_file.string() << endl;
-                    return -1;
-                }
-            }
-            enable_trace = trace_flags(enable_trace | trace_guards);
-        }
-        if ((enable_trace & trace_guards) && !listguardsout.is_open()) {
-        // by default list included names to std::cout
-            listguardsout.copyfmt(cout);
-            listguardsout.clear(cout.rdstate());
-            static_cast<std::basic_ios<char> &>(listguardsout).
-                rdbuf(cout.rdbuf());
-        }
-
+        
     // enable preserving comments mode
     bool preserve_comments = false;
     bool preserve_whitespace = false;
-    bool preserve_bol_whitespace = false;
-
+    
         if (vm.count("preserve")) {
         int preserve = vm["preserve"].as<int>();
-
+        
             switch(preserve) {
-            case 0:   break;                // preserve no whitespace
-            case 3:                         // preserve all whitespace
+            case 0:   break;
+            case 2:
                 preserve_whitespace = true;
+                /* fall through */
+            case 1:
                 preserve_comments = true;
-                preserve_bol_whitespace = true;
                 break;
-
-            case 2:                         // preserve comments and BOL whitespace only
-                preserve_comments = true;
-                preserve_bol_whitespace = true;
-                break;
-
-            case 1:                         // preserve BOL whitespace only
-                preserve_bol_whitespace = true;
-                break;
-
+                
             default:
                 cerr << "wave: bogus preserve whitespace option value: " 
-                     << preserve << ", should be 0, 1, 2, or 3" << endl;
+                     << preserve << ", should be 0, 1, or 2" << endl;
                 return -1;
             }
         }
@@ -784,36 +713,23 @@ int error_count = 0;
     // Since the #pragma wave system() directive may cause a potential security 
     // threat, it has to be enabled explicitly by --extended or -x
     bool enable_system_command = false;
-
+    
         if (vm.count("extended")) 
             enable_system_command = true;
 
     // This this the central piece of the Wave library, it provides you with 
     // the iterators to get the preprocessed tokens and allows to configure
     // the preprocessing stage in advance.
-    bool allow_output = true;   // will be manipulated from inside the hooks object
+    bool allow_output = true;     // will be manipulated from inside the hooks object
     std::string default_outfile;  // will be used from inside the hooks object
     trace_macro_expansion<token_type> hooks(preserve_whitespace, 
-        preserve_bol_whitespace, output, traceout, includelistout, 
-        listguardsout, enable_trace, enable_system_command, allow_output, 
-        default_outfile);
-
-    // enable macro invocation count, if appropriate
-        if (vm.count("macrocounts")) 
-            hooks.enable_macro_counting();
-
+        output, traceout, includelistout, enable_trace, enable_system_command,
+        allow_output, default_outfile);
     context_type ctx (instring.begin(), instring.end(), file_name.c_str(), hooks);
 
 #if BOOST_WAVE_SUPPORT_VARIADICS_PLACEMARKERS != 0
     // enable C99 mode, if appropriate (implies variadics)
         if (vm.count("c99")) {
-#if BOOST_WAVE_SUPPORT_CPP0X != 0
-            if (vm.count("c++0x")) {
-                cerr << "wave: multiple language options specified: --c99 "
-                        "and --c++0x" << endl;
-                return -1;
-            }
-#endif
             ctx.set_language(
                 boost::wave::language_support(
                     boost::wave::support_c99 
@@ -833,29 +749,6 @@ int error_count = 0;
             ctx.set_language(boost::wave::enable_variadics(ctx.get_language()));
         }
 #endif // BOOST_WAVE_SUPPORT_VARIADICS_PLACEMARKERS != 0
-#if BOOST_WAVE_SUPPORT_CPP0X != 0
-        if (vm.count("c++0x")) {
-            if (vm.count("c99")) {
-                cerr << "wave: multiple language options specified: --c99 "
-                        "and --c++0x" << endl;
-                return -1;
-            }
-            ctx.set_language(
-                boost::wave::language_support(
-                    boost::wave::support_cpp0x
-                 |  boost::wave::support_option_convert_trigraphs 
-                 |  boost::wave::support_option_long_long 
-                 |  boost::wave::support_option_emit_line_directives 
-#if BOOST_WAVE_SUPPORT_PRAGMA_ONCE != 0
-                 |  boost::wave::support_option_include_guard_detection
-#endif
-#if BOOST_WAVE_EMIT_PRAGMA_DIRECTIVES != 0
-                 |  boost::wave::support_option_emit_pragma_directives
-#endif
-                 |  boost::wave::support_option_insert_whitespace
-                ));
-        }
-#endif // BOOST_WAVE_SUPPORT_CPP0X != 0
 
     // enable long long support, if appropriate
         if (vm.count("long_long")) {
@@ -871,17 +764,17 @@ int error_count = 0;
                     ctx.get_language(), false));
         }
 #endif
-
+        
     // enable preserving comments mode
         if (preserve_comments) {
             ctx.set_language(
                 boost::wave::enable_preserve_comments(ctx.get_language()));
         }
-
+        
     // control the generation of #line directives
         if (vm.count("line")) {
             int lineopt = vm["line"].as<int>();
-            if (0 != lineopt && 1 != lineopt && 2 != lineopt) {
+            if (0 != lineopt && 1 != lineopt) {
                 cerr << "wave: bogus value for --line command line option: " 
                     << lineopt << endl;
                 return -1;
@@ -889,9 +782,6 @@ int error_count = 0;
             ctx.set_language(
                 boost::wave::enable_emit_line_directives(ctx.get_language(), 
                     lineopt != 0));
-
-            if (2 == lineopt) 
-                ctx.get_hooks().enable_relative_names_in_line_directives(true);
         }
 
     // control whether whitespace should be inserted to disambiguate output
@@ -918,7 +808,7 @@ int error_count = 0;
                 ctx.add_sysinclude_path(cmd_line_utils::trim_quotes(*cit).c_str());
             }
         }
-
+        
     // add include directories to the include search paths
         if (vm.count("include")) {
             cmd_line_utils::include_paths const &ip = 
@@ -934,7 +824,7 @@ int error_count = 0;
         // if -I- was given on the command line, this has to be propagated
             if (ip.seen_separator) 
                 ctx.set_sysinclude_delimiter();
-
+                 
         // add system include directories to the include path
             vector<std::string>::const_iterator sysend = ip.syspaths.end();
             for (vector<std::string>::const_iterator syscit = ip.syspaths.begin(); 
@@ -943,7 +833,7 @@ int error_count = 0;
                 ctx.add_sysinclude_path(cmd_line_utils::trim_quotes(*syscit).c_str());
             }
         }
-
+    
     // add additional defined macros 
         if (vm.count("define")) {
           vector<std::string> const &macros = vm["define"].as<vector<std::string> >();
@@ -979,20 +869,6 @@ int error_count = 0;
             }
         }
 
-#if BOOST_WAVE_USE_DEPRECIATED_PREPROCESSING_HOOKS == 0
-    // suppress expansion of specified macros
-        if (vm.count("noexpand")) {
-            vector<std::string> const &noexpandmacros = 
-                vm["noexpand"].as<vector<std::string> >();
-            vector<std::string>::const_iterator end = noexpandmacros.end();
-            for (vector<std::string>::const_iterator cit = noexpandmacros.begin(); 
-                 cit != end; ++cit)
-            {
-                ctx.get_hooks().add_noexpandmacro(*cit);
-            }
-        }
-#endif
-
     // maximal include nesting depth
         if (vm.count("nesting")) {
             int max_depth = vm["nesting"].as<int>();
@@ -1003,7 +879,7 @@ int error_count = 0;
             }
             ctx.set_max_include_nesting_depth(max_depth);
         }
-
+        
     // open the output file
         if (vm.count("output")) {
         // try to open the file, where to put the preprocessed output
@@ -1015,7 +891,7 @@ int error_count = 0;
                 default_outfile = "-";
             }
             else {
-                out_file = boost::wave::util::complete_path(out_file);
+                out_file = fs::complete(out_file);
                 fs::create_directories(boost::wave::util::branch_path(out_file));
                 output.open(out_file.string().c_str());
                 if (!output.is_open()) {
@@ -1049,17 +925,17 @@ int error_count = 0;
     //  we assume the session to be interactive if input is stdin and output is 
     //  stdout and the output is not inhibited
     bool is_interactive = input_is_stdin && !output.is_open() && allow_output;
-
+    
         if (is_interactive) {
         // if interactive we don't warn for missing endif's etc.
             ctx.set_language(
-                boost::wave::enable_single_line(ctx.get_language()), false);
+                boost::wave::enable_single_line(ctx.get_language()));
         }
-
+        
     // analyze the input file
     context_type::iterator_type first = ctx.begin();
     context_type::iterator_type last = ctx.end();
-
+    
     // preprocess the required include files 
         if (vm.count("forceinclude")) {
         // add the filenames to force as include files in _reverse_ order
@@ -1093,7 +969,7 @@ int error_count = 0;
         do {
         // loop over all generated tokens outputting the generated text 
         bool finished = false;
-
+        
             if (input_is_stdin) {
                 if (is_interactive) 
                     cout << ">>> ";     // prompt if is interactive
@@ -1104,16 +980,16 @@ int error_count = 0;
                     break;        // end of input reached
                 first = ctx.begin(instring.begin(), instring.end());
             }
-
+            
         bool need_to_advanve = false;
-
+        
             do {
                 try {
                     if (need_to_advanve) {
                         ++first;
                         need_to_advanve = false;
                     }
-
+                        
                     while (first != last) {
                     // store the last known good token position
                         current_position = (*first).get_position();
@@ -1131,7 +1007,7 @@ int error_count = 0;
                             else
                                 cout << (*first).get_value();
                         }
-
+                        
                     // advance to the next token
                         ++first;
                     }
@@ -1168,10 +1044,6 @@ int error_count = 0;
     // list all defined macros at the end of the preprocessing
         if (vm.count("macronames")) {
             if (!list_macro_names(ctx, vm["macronames"].as<std::string>()))
-                return -1;
-        }
-        if (vm.count("macrocounts")) {
-            if (!list_macro_counts(ctx, vm["macrocounts"].as<std::string>()))
                 return -1;
         }
     }
@@ -1215,16 +1087,16 @@ main (int argc, char *argv[])
              << "               using a different configuration (see wave_config.hpp)."
              << endl;
     }
-
+    
     // analyze the command line options and arguments
     try {
     // declare the options allowed on the command line only
     po::options_description desc_cmdline ("Options allowed on the command line only");
-
+        
         desc_cmdline.add_options()
             ("help,h", "print out program usage (this message)")
             ("version,v", "print the version number")
-            ("copyright", "print out the copyright statement")
+            ("copyright,c", "print out the copyright statement")
             ("config-file", po::value<vector<std::string> >()->composing(), 
                 "specify a config file (alternatively: @filepath)")
         ;
@@ -1250,14 +1122,10 @@ main (int argc, char *argv[])
                 "specify a macro to predefine (as macro[=[value]])")
             ("undefine,U", po::value<vector<std::string> >()->composing(), 
                 "specify a macro to undefine")
-#if BOOST_WAVE_USE_DEPRECIATED_PREPROCESSING_HOOKS == 0
-            ("noexpand,N", po::value<vector<std::string> >()->composing(), 
-                "specify a macro name, which should not be expanded")
-#endif
             ("nesting,n", po::value<int>(), 
                 "specify a new maximal include nesting depth")
         ;
-
+        
     po::options_description desc_ext ("Extended options (allowed everywhere)");
 
         desc_ext.add_options()
@@ -1270,27 +1138,19 @@ main (int argc, char *argv[])
             ("variadics", "enable certain C99 extensions in C++ mode")
             ("c99", "enable C99 mode (implies --variadics)")
 #endif 
-#if BOOST_WAVE_SUPPORT_CPP0X != 0
-            ("c++0x", "enable C++0x mode (implies --variadics and --long_long)")
-#endif 
             ("listincludes,l", po::value<std::string>(), 
                 "list names of included files to a file [arg] or to stdout [-]")
             ("macronames,m", po::value<std::string>(), 
                 "list all defined macros to a file [arg] or to stdout [-]")
-            ("macrocounts,c", po::value<std::string>(), 
-                "list macro invocation counts to a file [arg] or to stdout [-]")
             ("preserve,p", po::value<int>()->default_value(0), 
                 "preserve whitespace\n"
                             "0: no whitespace is preserved (default),\n"
-                            "1: begin of line whitespace is preserved,\n" 
-                            "2: comments and begin of line whitespace is preserved,\n" 
-                            "3: all whitespace is preserved")
+                            "1: comments are preserved,\n" 
+                            "2: all whitespace is preserved")
             ("line,L", po::value<int>()->default_value(1), 
                 "control the generation of #line directives\n"
                             "0: no #line directives are generated,\n"
-                            "1: #line directives will be emitted (default),\n"
-                            "2: #line directives will be emitted using relative\n"
-                            "   filenames")
+                            "1: #line directives will be emitted (default)")
             ("disambiguate", po::value<int>()->default_value(1), 
                 "control whitespace insertion to disambiguate\n"
                 "consecutive tokens\n"
@@ -1299,9 +1159,6 @@ main (int argc, char *argv[])
             ("extended,x", "enable the #pragma wave system() directive")
 #if BOOST_WAVE_SUPPORT_PRAGMA_ONCE != 0
             ("noguard,G", "disable include guard detection")
-            ("listguards,g", po::value<std::string>(), 
-                "list names of files flagged as 'include once' to a file [arg] "
-                "or to stdout [-]")
 #endif
 #if BOOST_WAVE_SERIALIZATION != 0
             ("state,s", po::value<std::string>(), 
@@ -1309,21 +1166,21 @@ main (int argc, char *argv[])
                 "or 'wave.state' [-] (interactive mode only)")
 #endif
         ;
-
+    
     // combine the options for the different usage schemes
     po::options_description desc_overall_cmdline;
     po::options_description desc_overall_cfgfile;
 
         desc_overall_cmdline.add(desc_cmdline).add(desc_generic).add(desc_ext);
         desc_overall_cfgfile.add(desc_generic).add(desc_ext);
-
+        
     // parse command line and store results
         using namespace boost::program_options::command_line_style;
 
     po::parsed_options opts(po::parse_command_line(argc, argv, 
             desc_overall_cmdline, unix_style, cmd_line_utils::at_option_parser));
     po::variables_map vm;
-
+    
         po::store(opts, vm);
         po::notify(vm);
 
@@ -1337,16 +1194,16 @@ main (int argc, char *argv[])
 
     // extract the arguments from the parsed command line
     vector<po::option> arguments;
-
+    
         std::remove_copy_if(opts.options.begin(), opts.options.end(), 
             back_inserter(arguments), cmd_line_utils::is_argument());
-
+            
     // try to find a config file somewhere up the filesystem hierarchy 
     // starting with the input file path. This allows to use a general wave.cfg 
     // file for all files in a certain project.
         if (arguments.size() > 0 && arguments[0].value[0] != "-") {
         // construct full path of input file
-          fs::path input_dir (boost::wave::util::complete_path(
+            fs::path input_dir (fs::complete(
                 boost::wave::util::create_path(arguments[0].value[0])));
 
         // chop of file name
@@ -1364,7 +1221,7 @@ main (int argc, char *argv[])
                 input_dir = boost::wave::util::branch_path(input_dir);
             }
         }
-
+        
     // if there is specified at least one config file, parse it and add the 
     // options to the main variables_map
         if (vm.count("config-file")) {
@@ -1389,7 +1246,7 @@ main (int argc, char *argv[])
             cout << desc_help << endl;
             return 1;
         }
-
+        
         if (vm.count("version")) {
             cout << get_version() << endl;
             return 0;

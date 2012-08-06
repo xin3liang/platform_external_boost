@@ -10,8 +10,5 @@
 #include <boost/fusion/algorithm/iteration/accumulate.hpp>
 #include <boost/fusion/algorithm/iteration/fold.hpp>
 #include <boost/fusion/algorithm/iteration/for_each.hpp>
-#include <boost/fusion/algorithm/iteration/iter_fold.hpp>
-#include <boost/fusion/algorithm/iteration/reverse_fold.hpp>
-#include <boost/fusion/algorithm/iteration/reverse_iter_fold.hpp>
 
 #endif

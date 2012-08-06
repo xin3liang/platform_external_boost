@@ -17,13 +17,12 @@
 
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/containers/container/string.hpp>
-#include <boost/interprocess/containers/containers_fwd.hpp>
 
 namespace boost {
 namespace interprocess {
 
-using boost::container::basic_string;
-using boost::container::string;
+using boost::interprocess_container::basic_string;
+using boost::interprocess_container::string;
 
 }  //namespace interprocess {
 }  //namespace boost {

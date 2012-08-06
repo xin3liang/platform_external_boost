@@ -1,6 +1,6 @@
 /////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga  2007-2009
+// (C) Copyright Ion Gaztanaga  2007-2008
 //
 // Distributed under the Boost Software License, Version 1.0.
 //    (See accompanying file LICENSE_1_0.txt or copy at
@@ -74,22 +74,15 @@ class common_slist_algorithms
       NodeTraits::set_next(prev_node, this_node);
    }
 
-   static void incorporate_after(node_ptr bp, node_ptr b, node_ptr be)
+   static void transfer_after(node_ptr p, node_ptr b, node_ptr e)
    {
-      node_ptr p(NodeTraits::get_next(bp));
-      NodeTraits::set_next(bp, b);
-      NodeTraits::set_next(be, p);
-   }
-   
-   static void transfer_after(node_ptr bp, node_ptr bb, node_ptr be)
-   {
-      if (bp != bb && bp != be && bb != be) {
-         node_ptr next_b = NodeTraits::get_next(bb);
-         node_ptr next_e = NodeTraits::get_next(be);
-         node_ptr next_p = NodeTraits::get_next(bp);
-         NodeTraits::set_next(bb, next_e);
-         NodeTraits::set_next(be, next_p);
-         NodeTraits::set_next(bp, next_b);
+      if (p != b && p != e && b != e) {
+         node_ptr next_b = NodeTraits::get_next(b);
+         node_ptr next_e = NodeTraits::get_next(e);
+         node_ptr next_p = NodeTraits::get_next(p);
+         NodeTraits::set_next(b, next_e);
+         NodeTraits::set_next(e, next_p);
+         NodeTraits::set_next(p, next_b);
       }
    }
 };

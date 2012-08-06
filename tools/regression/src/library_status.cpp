@@ -1,10 +1,9 @@
-//  Generate Library Status HTML from jam regression test output  -----------//
+//  Generate Compiler Status HTML from jam regression test output  -----------//
 
-//  Copyright Bryce Lelbach 2011 
-//  Copyright Beman Dawes 2002-2011.
+//  Copyright Beman Dawes 2002.  Distributed under the Boost
+//  Software License, Version 1.0. (See accompanying file
+//  LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-//  Distributed under the Boost Software License, Version 1.0. (See accompanying
-//  file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //  See http://www.boost.org/tools/regression/ for documentation.
 
 //Note: This version of the original program builds a large table
@@ -131,7 +130,7 @@ namespace
             if(fs::is_directory(*itr)){
                 std::pair<col_node::subcolumns_t::iterator, bool> result 
                     = node.m_subcolumns.insert(
-                        std::make_pair(itr->path().native(), col_node())
+                        std::make_pair(itr->filename(), col_node())
                     );
                 build_node_tree(*itr, result.first->second);
             }
@@ -630,15 +629,11 @@ namespace
             if(! fs::is_directory(*itr))
                 continue;
             
-            string test_name = itr->path().native();
-            // if the file name contains ".test"
+            string test_name = itr->filename();
+            // strip off the ".test" is there is one
             string::size_type s = test_name.find( ".test" );
             if(string::npos != s)
-                // strip it off
                 test_name.resize(s);
-            else
-                // if it doesn't - skip this directory
-                continue;
 
             results.push_back( std::string() ); 
             do_row(
@@ -712,12 +707,12 @@ namespace
         }
     }
 
-    fs::path find_lib_test_dir(fs::path const& initial_path){
+    fs::path find_lib_test_dir(){
         // walk up from the path were we started until we find
         // bin or bin.v2
 
-        fs::path::const_iterator it = initial_path.end(), end = initial_path.end();
-        fs::path test_lib_dir = initial_path;
+        fs::path::const_iterator leaf_itr = fs::initial_path().end();
+        fs::path test_lib_dir = fs::initial_path();
         for(;;){
             if(fs::is_directory( test_lib_dir / "bin.v2")){
                 test_lib_dir /= "bin.v2";
@@ -731,17 +726,16 @@ namespace
             }
             if(test_lib_dir.empty())
                 throw std::string("binary path not found");
-            if(*it != "libs")
-                --it;
+            if(*leaf_itr != "libs")
+                --leaf_itr;
             test_lib_dir.remove_filename();
         }
 
-        if(it == end)
+        if(leaf_itr == fs::initial_path().end())
             throw std::string("must be run from within a library directory");
 
-
-        for(;it != end; ++it){ 
-            test_lib_dir /= *it;    // append "libs"
+        while(leaf_itr != fs::initial_path().end()){
+            test_lib_dir /= *leaf_itr++;    // append "libs"
         }
         return test_lib_dir;
     }
@@ -758,7 +752,7 @@ namespace
         }
         string library_name;
         for(;;){
-            library_name.append((*++e_itr).native());
+            library_name.append(*++e_itr);
             if(1 == --count)
                 break;
             library_name.append("/");
@@ -766,8 +760,8 @@ namespace
         return library_name;
     }
 
-    fs::path find_boost_root(fs::path initial_path){
-        fs::path boost_root = initial_path;
+    fs::path find_boost_root(){
+        fs::path boost_root = fs::initial_path();
         for(;;){
             if(fs::is_directory( boost_root / "boost")){
                 break;
@@ -781,11 +775,11 @@ namespace
     }
 
     //  do_table  ----------------------------------------------------------------//
-    void do_table(fs::path const& initial_path, const string & lib_name)
+    void do_table(const string & lib_name)
     {
         col_node root_node;
 
-        fs::path lib_test_dir = find_lib_test_dir(initial_path);
+        fs::path lib_test_dir = find_lib_test_dir();
 
         for ( fs::directory_iterator itr(lib_test_dir); itr != end_itr; ++itr )
         {
@@ -827,23 +821,21 @@ namespace
 
 int cpp_main( int argc, char * argv[] ) // note name!
 {
-    fs::path initial_path = fs::initial_path();
-
     fs::path comment_path;
     while ( argc > 1 && *argv[1] == '-' )
     {
         if ( argc > 2 && std::strcmp( argv[1], "--compiler" ) == 0 )
         { specific_compiler = argv[2]; --argc; ++argv; }
         else if ( argc > 2 && std::strcmp( argv[1], "--locate-root" ) == 0 )
-        { locate_root = fs::path( argv[2] ); --argc; ++argv; }
+        { locate_root = fs::path( argv[2], fs::native ); --argc; ++argv; }
         else if ( argc > 2 && std::strcmp( argv[1], "--boost-root" ) == 0 )
-        { boost_root = fs::path( argv[2] ); --argc; ++argv; }
+        { boost_root = fs::path( argv[2], fs::native ); --argc; ++argv; }
         else if ( argc > 2 && std::strcmp( argv[1], "--comment" ) == 0 )
-        { comment_path = fs::path( argv[2] ); --argc; ++argv; }
+        { comment_path = fs::path( argv[2], fs::native ); --argc; ++argv; }
         else if ( argc > 2 && std::strcmp( argv[1], "--notes" ) == 0 )
-        { notes_path = fs::path( argv[2] ); --argc; ++argv; }
+        { notes_path = fs::path( argv[2], fs::native ); --argc; ++argv; }
         else if ( argc > 2 && std::strcmp( argv[1], "--notes-map" ) == 0 )
-        { notes_map_path = fs::path( argv[2] ); --argc; ++argv; }
+        { notes_map_path = fs::path( argv[2], fs::native ); --argc; ++argv; }
         else if ( std::strcmp( argv[1], "--ignore-pass" ) == 0 ) ignore_pass = true;
         else if ( std::strcmp( argv[1], "--no-warn" ) == 0 ) no_warn = true;
         else if ( std::strcmp( argv[1], "--v2" ) == 0 )
@@ -882,11 +874,11 @@ int cpp_main( int argc, char * argv[] ) // note name!
     }
 
     if(boost_root.empty())
-        boost_root = find_boost_root(initial_path);
+        boost_root = find_boost_root();
     if ( locate_root.empty() ) 
         locate_root = boost_root;
 
-    report.open( fs::path( argv[1] ) );
+    report.open( fs::path( argv[1], fs::native ) );
     if ( !report )
     {
         std::cerr << "Could not open report output file: " << argv[2] << std::endl;
@@ -895,8 +887,8 @@ int cpp_main( int argc, char * argv[] ) // note name!
 
     if ( argc == 3 )
     {
-        fs::path links_path( argv[2] );
-        links_name = links_path.native();
+        fs::path links_path( argv[2], fs::native );
+        links_name = links_path.filename();
         links_file.open( links_path );
         if ( !links_file )
         {
@@ -908,7 +900,7 @@ int cpp_main( int argc, char * argv[] ) // note name!
 
     build_notes_bookmarks();
 
-    const string library_name = find_lib_name(initial_path);
+    const string library_name = find_lib_name(fs::initial_path());
 
     char run_date[128];
     std::time_t tod;
@@ -972,7 +964,7 @@ int cpp_main( int argc, char * argv[] ) // note name!
             ;
     }
 
-    do_table(initial_path, library_name);
+    do_table(library_name);
 
     if ( load_notes_html() ) report << notes_html << "\n";
 

@@ -17,12 +17,11 @@
 
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/containers/container/deque.hpp>
-#include <boost/interprocess/containers/containers_fwd.hpp>
 
 namespace boost {
 namespace interprocess {
 
-using boost::container::deque;
+using boost::interprocess_container::deque;
 
 }  //namespace interprocess {
 }  //namespace boost {

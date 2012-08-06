@@ -2,21 +2,35 @@
 .. Software License, Version 1.0. (See accompanying
 .. file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-Install Boost.Build
-...................
-
 Boost.Build_ is a text-based system for developing, testing, and
-installing software. First, you'll need to build and
-install it. To do this:
+installing software.  To use it, you'll need an executable called
+``bjam``.
 
-1. Go to the directory ``tools``\ |/|\ ``build``\ |/|\ ``v2``\ |/|.
-2. Run ``bootstrap.bat``
-3. Run ``b2 install --prefix=``\ *PREFIX* where *PREFIX* is
-   the directory where you want Boost.Build to be installed
-4. Add *PREFIX*\ |/|\ ``bin`` to your PATH environment variable.
+.. |precompiled-bjam| replace:: download a pre-built ``bjam`` executable
 
+
+.. _precompiled-bjam: http://sourceforge.net/project/showfiles.php?group_id=7586&package_id=72941
+.. .. _Boost.Jam documentation: Boost.Jam_
 .. _Boost.Build: ../../tools/build/index.html
+.. _Boost.Jam: ../../tools/jam/index.html
 .. _Boost.Build documentation: Boost.Build_
+
+Get ``bjam``
+............
+
+``bjam`` is the |command-line tool| that drives the Boost Build
+system.  To build Boost binaries, you'll invoke ``bjam`` from the
+Boost root.  
+
+We suggest you |precompiled-bjam|_ for your platform.
+Alternatively, you can build ``bjam`` yourself using `these
+instructions`__.
+
+__ `building bjam`_
+
+Move the ``bjam`` executable into a directory in your PATH.  You can
+see the list of directories in your PATH, separated by |pathsep|\ s,
+by typing “\ |path|\ ” at the command prompt.
 
 .. _toolset:
 .. _toolset-name:
@@ -31,10 +45,10 @@ Boost.Build documentation`__).
 __ http://www.boost.org/boost-build2/doc/html/bbv2/reference/tools.html
 
 .. Note:: If you previously chose a toolset for the purposes of
-  `building b2`_, you should assume it won't work and instead
+  `building bjam`_, you should assume it won't work and instead
   choose newly from the table below.
 
-.. _building b2: ../../doc/html/bbv2/installation.html
+.. _building bjam: ../../doc/html/jam/building.html
 
 +-----------+--------------------+-----------------------------+
 |Toolset    |Vendor              |Notes                        |
@@ -102,18 +116,18 @@ directory is writable, this step isn't strictly necessary: by
 default Boost.Build will create a ``bin.v2/`` subdirectory for that
 purpose in your current working directory.
 
-Invoke ``b2``
+Invoke ``bjam``
 ...............
 
 .. |build-directory| replace:: *build-directory*
 .. |toolset-name| replace:: *toolset-name*
 
 Change your current directory to the Boost root directory and
-invoke ``b2`` as follows:
+invoke ``bjam`` as follows:
 
 .. parsed-literal::
 
-  b2 **--build-dir=**\ |build-directory|_ **toolset=**\ |toolset-name|_ |build-type-complete| stage
+  bjam **--build-dir=**\ |build-directory|_ **toolset=**\ |toolset-name|_ |build-type-complete| stage
 
 For a complete description of these and other invocation options,
 please see the `Boost.Build documentation`__.

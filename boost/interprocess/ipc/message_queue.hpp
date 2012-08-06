@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2005-2009. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2008. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -22,7 +22,6 @@
 #include <boost/interprocess/offset_ptr.hpp>
 #include <boost/interprocess/creation_tags.hpp>
 #include <boost/interprocess/exceptions.hpp>
-#include <boost/interprocess/permissions.hpp>
 #include <boost/detail/no_exceptions_support.hpp>
 #include <boost/interprocess/detail/type_traits.hpp>
 
@@ -57,8 +56,7 @@ class message_queue
    message_queue(create_only_t create_only,
                  const char *name, 
                  std::size_t max_num_msg, 
-                 std::size_t max_msg_size,
-                 const permissions &perm = permissions());
+                 std::size_t max_msg_size);
 
    //!Opens or creates a process shared message queue with name "name". 
    //!If the queue is created, the maximum number of messages will be "max_num_msg" 
@@ -68,8 +66,7 @@ class message_queue
    message_queue(open_or_create_t open_or_create,
                  const char *name, 
                  std::size_t max_num_msg, 
-                 std::size_t max_msg_size,
-                 const permissions &perm = permissions());
+                 std::size_t max_msg_size);
 
    //!Opens a previously created process shared message queue with name "name". 
    //!If the was not previously created or there are no free resources, 
@@ -382,8 +379,7 @@ inline std::size_t message_queue::get_mem_size
 inline message_queue::message_queue(create_only_t create_only,
                                     const char *name, 
                                     std::size_t max_num_msg, 
-                                    std::size_t max_msg_size,
-                                    const permissions &perm)
+                                    std::size_t max_msg_size)
       //Create shared memory and execute functor atomically
    :  m_shmem(create_only, 
               name, 
@@ -391,15 +387,13 @@ inline message_queue::message_queue(create_only_t create_only,
               read_write,
               static_cast<void*>(0),
               //Prepare initialization functor
-              detail::initialization_func_t (max_num_msg, max_msg_size),
-              perm)
+              detail::initialization_func_t (max_num_msg, max_msg_size))
 {}
 
 inline message_queue::message_queue(open_or_create_t open_or_create,
                                     const char *name, 
                                     std::size_t max_num_msg, 
-                                    std::size_t max_msg_size,
-                                    const permissions &perm)
+                                    std::size_t max_msg_size)
       //Create shared memory and execute functor atomically
    :  m_shmem(open_or_create, 
               name, 
@@ -407,8 +401,7 @@ inline message_queue::message_queue(open_or_create_t open_or_create,
               read_write,
               static_cast<void*>(0),
               //Prepare initialization functor
-              detail::initialization_func_t (max_num_msg, max_msg_size),
-              perm)
+              detail::initialization_func_t (max_num_msg, max_msg_size))
 {}
 
 inline message_queue::message_queue(open_only_t open_only,
@@ -481,14 +474,14 @@ inline bool message_queue::do_send(block_t block,
                while (p_hdr->is_full());
             break;
             default:
-            break;
+               throw interprocess_exception();
          }
       }
       
       //Get the first free message from free message queue
       detail::msg_hdr_t *free_msg = p_hdr->free_msg();
       if (free_msg == 0) {
-         throw interprocess_exception("boost::interprocess::message_queue corrupted");
+         throw interprocess_exception();
       }
 
       //Copy control data to the free message
@@ -575,7 +568,7 @@ inline bool
 
             //Paranoia check
             default:
-            break;
+               throw interprocess_exception();
          }
       }
 
@@ -584,7 +577,7 @@ inline bool
 
       //Paranoia check
       if (top_msg == 0) {
-         throw interprocess_exception("boost::interprocess::message_queue corrupted");
+         throw interprocess_exception();
       }
 
       //Get data from the message

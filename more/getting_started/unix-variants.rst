@@ -108,12 +108,12 @@ least use
   **$** ./bootstrap.sh **--prefix=**\ *path*\ /\ *to*\ /\ *installation*\ /\ *prefix* 
 
 to install somewhere else.  Also, consider using the
-``--show-libraries`` and ``--with-libraries=``\ *library-name-list* options to limit the
+``--show-libraries`` and ``--with-``\ *library_name* options to limit the
 long wait you'll experience if you build everything.  Finally,
 
 .. parsed-literal::
 
-  **$** ./b2 install
+  **$** ./bjam install
 
 will leave Boost binaries in the ``lib/`` subdirectory of your
 installation prefix.  You will also find a copy of the Boost
@@ -129,19 +129,9 @@ Or, Build Custom Binaries
 -------------------------
 
 If you're using a compiler other than your system's default, you'll
-need to use Boost.Build_ to create binaries.
-
-You'll also
+need to use Boost.Build_ to create binaries.  You'll also
 use this method if you need a nonstandard build variant (see the
 `Boost.Build documentation`_ for more details).
-
-.. Admonition:: Boost.CMake
-
-  There is also an experimental CMake build for boost, supported and distributed
-  separately.  See the `Boost.CMake`_ wiki page for more information.
-
-  .. _`Boost.CMake`:
-       https://svn.boost.org/trac/boost/wiki/CMake
 
 .. include:: detail/build-from-source-head.rst
 
@@ -150,7 +140,7 @@ For example, your session might look like this:
 .. parsed-literal::
 
    $ cd ~/|boost_ver|
-   $ b2 **--build-dir=**\ /tmp/build-boost **toolset=**\ gcc stage
+   $ bjam **--build-dir=**\ /tmp/build-boost **toolset=**\ gcc stage
 
 That will build static and shared non-debug multi-threaded variants of the libraries. To build all variants, pass the additional option, “``--build-type=complete``”.
 

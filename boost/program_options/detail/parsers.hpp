@@ -29,18 +29,18 @@ namespace boost { namespace program_options {
     template<class charT>
     basic_command_line_parser<charT>::
     basic_command_line_parser(const std::vector<
-                              std::basic_string<charT> >& xargs)
-       : detail::cmdline(to_internal(xargs))
+                              std::basic_string<charT> >& args)
+       : detail::cmdline(to_internal(args))
     {}
 
 
     template<class charT>
     basic_command_line_parser<charT>::
-    basic_command_line_parser(int argc, const charT* const argv[])
+    basic_command_line_parser(int argc, charT* argv[])
     : detail::cmdline(
         // Explicit template arguments are required by gcc 3.3.1 
         // (at least mingw version), and do no harm on other compilers.
-        to_internal(detail::make_vector<charT, const charT* const*>(argv+1, argv+argc+!argc)))
+        to_internal(detail::make_vector<charT, charT**>(argv+1, argv+argc+!argc)))
     {}
 
     
@@ -64,9 +64,9 @@ namespace boost { namespace program_options {
 
     template<class charT>
     basic_command_line_parser<charT>& 
-    basic_command_line_parser<charT>::style(int xstyle)
+    basic_command_line_parser<charT>::style(int style)
     {
-        detail::cmdline::style(xstyle);
+        detail::cmdline::style(style);
         return *this;
     }
 
@@ -111,7 +111,7 @@ namespace boost { namespace program_options {
 
     template<class charT>
     basic_parsed_options<charT>
-    parse_command_line(int argc, const charT* const argv[],
+    parse_command_line(int argc, charT* argv[],
                        const options_description& desc,
                        int style,
                        function1<std::pair<std::string, std::string>, 

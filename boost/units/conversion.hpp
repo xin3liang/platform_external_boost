@@ -11,9 +11,6 @@
 #ifndef BOOST_UNITS_CONVERSION_HPP
 #define BOOST_UNITS_CONVERSION_HPP
 
-/// \file
-/// \brief Template for defining conversions between quantities.
-
 #include <boost/units/detail/conversion_impl.hpp>
 
 namespace boost {

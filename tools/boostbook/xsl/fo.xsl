@@ -129,58 +129,31 @@
  
  -->
 
-<xsl:template match="//phrase[@role='keyword' and
-                     (ancestor::programlisting or
-                      ancestor::synopsis or
-                      ancestor::literallayout)]">
+<xsl:template match="//programlisting/phrase[@role='keyword']">
   <fo:inline color="#0000AA"><xsl:apply-templates/></fo:inline>
 </xsl:template>
-<xsl:template match="//phrase[@role='special' and
-                     (ancestor::programlisting or
-                      ancestor::synopsis or
-                      ancestor::literallayout)]">
+<xsl:template match="//programlisting/phrase[@role='special']">
   <fo:inline color="#707070"><xsl:apply-templates/></fo:inline>
 </xsl:template>
-<xsl:template match="//phrase[@role='preprocessor' and
-                     (ancestor::programlisting or
-                      ancestor::synopsis or
-                      ancestor::literallayout)]">
+<xsl:template match="//programlisting/phrase[@role='preprocessor']">
   <fo:inline color="#402080"><xsl:apply-templates/></fo:inline>
 </xsl:template>
-<xsl:template match="//phrase[@role='char' and
-                     (ancestor::programlisting or
-                      ancestor::synopsis or
-                      ancestor::literallayout)]">
+<xsl:template match="//programlisting/phrase[@role='char']">
   <fo:inline color="teal"><xsl:apply-templates/></fo:inline>
 </xsl:template>
-<xsl:template match="//phrase[@role='comment' and
-                     (ancestor::programlisting or
-                      ancestor::synopsis or
-                      ancestor::literallayout)]">
+<xsl:template match="//programlisting/phrase[@role='comment']">
   <fo:inline color="#800000"><xsl:apply-templates/></fo:inline>
 </xsl:template>
-<xsl:template match="//phrase[@role='string' and
-                     (ancestor::programlisting or
-                      ancestor::synopsis or
-                      ancestor::literallayout)]">
+<xsl:template match="//programlisting/phrase[@role='string']">
   <fo:inline color="teal"><xsl:apply-templates/></fo:inline>
 </xsl:template>
-<xsl:template match="//phrase[@role='number' and
-                     (ancestor::programlisting or
-                      ancestor::synopsis or
-                      ancestor::literallayout)]">
+<xsl:template match="//programlisting/phrase[@role='number']">
   <fo:inline color="teal"><xsl:apply-templates/></fo:inline>
 </xsl:template>
-<xsl:template match="//phrase[@role='white_bkd' and
-                     (ancestor::programlisting or
-                      ancestor::synopsis or
-                      ancestor::literallayout)]">
+<xsl:template match="//programlisting/phrase[@role='white_bkd']">
   <fo:inline color="#FFFFFF"><xsl:apply-templates/></fo:inline>
 </xsl:template>
-<xsl:template match="//phrase[@role='dk_grey_bkd' and
-                     (ancestor::programlisting or
-                      ancestor::synopsis or
-                      ancestor::literallayout)]">
+<xsl:template match="//programlisting/phrase[@role='dk_grey_bkd']">
   <fo:inline color="#999999"><xsl:apply-templates/></fo:inline>
 </xsl:template>
 
@@ -269,7 +242,7 @@ General default options go here:
 * Body text is not indented compared to the titles.
 * Page margins are a rather small 0.5in, but we need
   all the space we can get for code blocks.
-* Paper size is A4: an ISO standard, slightly taller and narrower than US Letter.
+* Paper size is A4: an ISO standard, and just slightly smaller than US Letter.
 * Use SVG graphics for admonishments: the bitmaps look awful in PDF's.
 * Disable draft mode so we're not constantly trying to download the necessary graphic.
 * Set default image paths to pull down direct from SVN: individual Jamfiles can override this

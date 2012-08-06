@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////
 //
 // (C) Copyright Olaf Krzikalla 2004-2006.
-// (C) Copyright Ion Gaztanaga  2006-2009
+// (C) Copyright Ion Gaztanaga  2006-2008
 //
 // Distributed under the Boost Software License, Version 1.0.
 //    (See accompanying file LICENSE_1_0.txt or copy at
@@ -93,7 +93,6 @@ class splay_set_base_hook
       >::type
 {
    #if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
-   public:
    //! <b>Effects</b>: If link_mode is \c auto_unlink or \c safe_link
    //!   initializes the node to an unlinked state.
    //! 
@@ -217,7 +216,6 @@ class splay_set_member_hook
       >::type
 {
    #if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
-   public:
    //! <b>Effects</b>: If link_mode is \c auto_unlink or \c safe_link
    //!   initializes the node to an unlinked state.
    //! 

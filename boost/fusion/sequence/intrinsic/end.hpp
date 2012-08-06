@@ -8,15 +8,13 @@
 #define FUSION_END_04052005_1141
 
 #include <boost/fusion/support/tag_of.hpp>
-#include <boost/fusion/support/is_sequence.hpp>
-#include <boost/utility/enable_if.hpp>
 
 namespace boost { namespace fusion
 {
     // Special tags:
     struct sequence_facade_tag;
     struct boost_tuple_tag; // boost::tuples::tuple tag
-    struct boost_array_tag; // boost::array tag
+    struct array_tag; // boost::array tag
     struct mpl_sequence_tag; // mpl sequence tag
     struct std_pair_tag; // std::pair tag
 
@@ -40,7 +38,7 @@ namespace boost { namespace fusion
         struct end_impl<boost_tuple_tag>;
 
         template <>
-        struct end_impl<boost_array_tag>;
+        struct end_impl<array_tag>;
 
         template <>
         struct end_impl<mpl_sequence_tag>;
@@ -59,22 +57,14 @@ namespace boost { namespace fusion
     }
 
     template <typename Sequence>
-    inline typename
-        lazy_enable_if<
-            traits::is_sequence<Sequence>
-          , result_of::end<Sequence>
-        >::type const
+    inline typename result_of::end<Sequence>::type const
     end(Sequence& seq)
     {
         return result_of::end<Sequence>::call(seq);
     }
 
     template <typename Sequence>
-    inline typename
-        lazy_enable_if<
-            traits::is_sequence<Sequence>
-          , result_of::end<Sequence const>
-        >::type const
+    inline typename result_of::end<Sequence const>::type const
     end(Sequence const& seq)
     {
         return result_of::end<Sequence const>::call(seq);

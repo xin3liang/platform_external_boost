@@ -17,11 +17,11 @@
 #  pragma once
 #endif
 
-#include "config_begin.hpp"
-#include INCLUDE_BOOST_CONTAINER_DETAIL_WORKAROUND_HPP
+#include <boost/interprocess/containers/container/detail/config_begin.hpp>
+#include <boost/interprocess/containers/container/detail/workaround.hpp>
 
 namespace boost {
-namespace container { 
+namespace interprocess_container { 
 namespace containers_detail {
 
 template<class T>
@@ -35,9 +35,9 @@ struct value_init
 };
 
 }  //namespace containers_detail { 
-}  //namespace container { 
+}  //namespace interprocess_container { 
 }  //namespace boost {
 
-#include INCLUDE_BOOST_CONTAINER_DETAIL_CONFIG_END_HPP
+#include <boost/interprocess/containers/container/detail/config_end.hpp>
 
 #endif   //#ifndef BOOST_CONTAINERS_DETAIL_VALUE_INIT_HPP

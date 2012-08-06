@@ -3,17 +3,16 @@
 .. file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 Building the special ``stage`` target places Boost
-library binaries in the ``stage``\ |/|\ ``lib``\ |/| subdirectory of
-the Boost tree.  To use a different directory pass the
-``--stagedir=``\ *directory* option to ``b2``.
+library binaries in the ``stage``\ |/|\ ``lib``\ |/| subdirectory of your `build
+directory`_.
 
-.. Note:: ``b2`` is case-sensitive; it is important that all the
+.. Note:: ``bjam`` is case-sensitive; it is important that all the
    parts shown in **bold** type above be entirely lower-case.
 
 For a description of other options you can pass when invoking
-``b2``, type::
+``bjam``, type::
 
-  b2 --help
+  bjam --help
 
 In particular, to limit the amount of time spent building, you may
 be interested in:

@@ -48,8 +48,7 @@ namespace boost { namespace fusion { namespace detail
         static type
         call(First const& f, Last const& l)
         {
-            typename result_of::deref<First>::type v = *f;
-            return type(v, next_build_cons::call(fusion::next(f), l));
+            return type(*f, next_build_cons::call(fusion::next(f), l));
         }
     };
 

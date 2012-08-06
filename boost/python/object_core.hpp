@@ -5,8 +5,6 @@
 #ifndef OBJECT_CORE_DWA2002615_HPP
 # define OBJECT_CORE_DWA2002615_HPP
 
-# define BOOST_PYTHON_OBJECT_HAS_IS_NONE // added 2010-03-15 by rwgk
-
 # include <boost/python/detail/prefix.hpp>
 
 # include <boost/type.hpp>
@@ -128,10 +126,6 @@ namespace api
       const_object_objattribute attr(object const&) const;
       object_objattribute attr(object const&);
 
-      // Wrap 'in' operator (aka. __contains__)
-      template <class T>
-      object contains(T const& key) const;
-      
       // item access
       //
       const_object_item operator[](object_cref) const;
@@ -241,9 +235,7 @@ namespace api
         
       // Underlying object access -- returns a borrowed reference
       inline PyObject* ptr() const;
-
-      inline bool is_none() const;
-
+      
    private:
       PyObject* m_ptr;
   };
@@ -491,15 +483,6 @@ object api::object_operators<U>::operator()(detail::args_proxy const &args,
  
 }  
 
-
-template <typename U>
-template <class T>
-object api::object_operators<U>::contains(T const& key) const
-{
-    return this->attr("__contains__")(object(key));
-}
-
-
 inline object::object()
     : object_base(python::incref(Py_None))
 {}
@@ -541,11 +524,6 @@ inline object::object(detail::new_non_null_reference p)
 inline PyObject* api::object_base::ptr() const
 {
     return m_ptr;
-}
-
-inline bool api::object_base::is_none() const
-{
-    return (m_ptr == Py_None);
 }
 
 //

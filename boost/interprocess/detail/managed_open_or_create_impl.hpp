@@ -22,7 +22,6 @@
 #include <boost/interprocess/creation_tags.hpp>
 #include <boost/interprocess/detail/mpl.hpp>
 #include <boost/interprocess/detail/move.hpp>
-#include <boost/interprocess/permissions.hpp>
 #include <boost/cstdint.hpp>
 
 namespace boost {
@@ -30,66 +29,17 @@ namespace interprocess {
 
 /// @cond
 namespace detail{ class interprocess_tester; }
-
-
-template<class DeviceAbstraction>
-struct managed_open_or_create_impl_device_id_t
-{
-   typedef const char *type;
-};
-
-#ifdef BOOST_INTERPROCESS_XSI_SHARED_MEMORY_OBJECTS
-
-class xsi_shared_memory_file_wrapper;
-class xsi_key;
-
-template<>
-struct managed_open_or_create_impl_device_id_t<xsi_shared_memory_file_wrapper>
-{  
-   typedef xsi_key type;
-};
-
-#endif   //BOOST_INTERPROCESS_XSI_SHARED_MEMORY_OBJECTS
-   
 /// @endcond
 
 namespace detail {
 
-
-template <bool StoreDevice, class DeviceAbstraction>
-class managed_open_or_create_impl_device_holder
-{
-   public:
-   DeviceAbstraction &get_device()
-   {  static DeviceAbstraction dev; return dev; }
-
-   const DeviceAbstraction &get_device() const
-   {  static DeviceAbstraction dev; return dev; }
-};
-
-template <class DeviceAbstraction>
-class managed_open_or_create_impl_device_holder<true, DeviceAbstraction>
-{
-   public:
-   DeviceAbstraction &get_device()
-   {  return dev; }
-
-   const DeviceAbstraction &get_device() const
-   {  return dev; }
-   
-   private:
-   DeviceAbstraction dev;
-};
-
-template<class DeviceAbstraction, bool FileBased = true, bool StoreDevice = true>
+template<class DeviceAbstraction, bool FileBased = true>
 class managed_open_or_create_impl
-   : public managed_open_or_create_impl_device_holder<StoreDevice, DeviceAbstraction>
 {
    //Non-copyable
-   BOOST_INTERPROCESS_MOVABLE_BUT_NOT_COPYABLE(managed_open_or_create_impl)
+   managed_open_or_create_impl(managed_open_or_create_impl &);
+   managed_open_or_create_impl &operator=(managed_open_or_create_impl &);
 
-   typedef typename managed_open_or_create_impl_device_id_t<DeviceAbstraction>::type device_id_t;
-   typedef managed_open_or_create_impl_device_holder<StoreDevice, DeviceAbstraction> DevHolder;
    enum
    {  
       UninitializedSegment,  
@@ -99,6 +49,8 @@ class managed_open_or_create_impl
    };
 
    public:
+   BOOST_INTERPROCESS_ENABLE_MOVE_EMULATION(managed_open_or_create_impl)
+
    static const std::size_t
       ManagedOpenOrCreateUserOffset = 
          detail::ct_rounded_size
@@ -109,107 +61,97 @@ class managed_open_or_create_impl
    {}
 
    managed_open_or_create_impl(create_only_t, 
-                 const device_id_t & id,
+                 const char *name,
                  std::size_t size,
-                 mode_t mode,
-                 const void *addr,
-                 const permissions &perm)
+                 mode_t mode = read_write,
+                 const void *addr = 0)
    {
+      m_name = name;
       priv_open_or_create
          ( detail::DoCreate
-         , id
          , size
          , mode
          , addr
-         , perm
          , null_mapped_region_function());
    }
 
    managed_open_or_create_impl(open_only_t, 
-                 const device_id_t & id,
-                 mode_t mode,
-                 const void *addr)
+                 const char *name,
+                 mode_t mode = read_write,
+                 const void *addr = 0)
    {
+      m_name = name;
       priv_open_or_create
          ( detail::DoOpen
-         , id
          , 0
          , mode
          , addr
-         , permissions()
          , null_mapped_region_function());
    }
 
 
    managed_open_or_create_impl(open_or_create_t, 
-                 const device_id_t & id,
+                 const char *name,
                  std::size_t size,
-                 mode_t mode,
-                 const void *addr,
-                 const permissions &perm)
+                 mode_t mode = read_write,
+                 const void *addr = 0)
    {
+      m_name = name;
       priv_open_or_create
          ( detail::DoOpenOrCreate
-         , id
          , size
          , mode
          , addr
-         , perm
          , null_mapped_region_function());
    }
 
    template <class ConstructFunc>
    managed_open_or_create_impl(create_only_t, 
-                 const device_id_t & id,
+                 const char *name,
                  std::size_t size,
                  mode_t mode,
                  const void *addr,
-                 const ConstructFunc &construct_func,
-                 const permissions &perm)
+                 const ConstructFunc &construct_func)
    {
+      m_name = name;
       priv_open_or_create
          (detail::DoCreate
-         , id
          , size
          , mode
          , addr
-         , perm
          , construct_func);
    }
 
    template <class ConstructFunc>
    managed_open_or_create_impl(open_only_t, 
-                 const device_id_t & id,
+                 const char *name,
                  mode_t mode,
                  const void *addr,
                  const ConstructFunc &construct_func)
    {
+      m_name = name;
       priv_open_or_create
          ( detail::DoOpen
-         , id
          , 0
          , mode
          , addr
-         , permissions()
          , construct_func);
    }
 
    template <class ConstructFunc>
    managed_open_or_create_impl(open_or_create_t, 
-                 const device_id_t & id,
+                 const char *name,
                  std::size_t size,
                  mode_t mode,
                  const void *addr,
-                 const ConstructFunc &construct_func,
-                 const permissions &perm)
+                 const ConstructFunc &construct_func)
    {
+      m_name = name;
       priv_open_or_create
          ( detail::DoOpenOrCreate
-         , id
          , size
          , mode
          , addr
-         , perm
          , construct_func);
    }
 
@@ -240,21 +182,19 @@ class managed_open_or_create_impl
 
    void swap(managed_open_or_create_impl &other)
    {
+      this->m_name.swap(other.m_name);
       this->m_mapped_region.swap(other.m_mapped_region);
    }
+
+   const char *get_name() const
+   {  return m_name.c_str();  }
 
    bool flush()
    {  return m_mapped_region.flush();  }
 
+
    const mapped_region &get_mapped_region() const
    {  return m_mapped_region;  }
-
-
-   DeviceAbstraction &get_device()
-   {  return this->DevHolder::get_device(); }
-
-   const DeviceAbstraction &get_device() const
-   {  return this->DevHolder::get_device(); }
 
    private:
 
@@ -269,26 +209,23 @@ class managed_open_or_create_impl
 
    //These are templatized to allow explicit instantiations
    template<bool dummy>
-   static void create_device(DeviceAbstraction &dev, const device_id_t & id, std::size_t size, const permissions &perm, detail::false_)
+   static void create_device(DeviceAbstraction &dev, const char *name, std::size_t size, detail::false_)
    {
-      DeviceAbstraction tmp(create_only, id, read_write, size, perm);
+      DeviceAbstraction tmp(create_only, name, read_write, size);
       tmp.swap(dev);
    }
 
    template<bool dummy>
-   static void create_device(DeviceAbstraction &dev, const device_id_t & id, std::size_t, const permissions &perm, detail::true_)
+   static void create_device(DeviceAbstraction &dev, const char *name, std::size_t, detail::true_)
    {
-      DeviceAbstraction tmp(create_only, id, read_write, perm);
+      DeviceAbstraction tmp(create_only, name, read_write);
       tmp.swap(dev);
    }
 
    template <class ConstructFunc> inline 
    void priv_open_or_create
-      (detail::create_enum_t type, 
-       const device_id_t & id, 
-       std::size_t size,
+      (detail::create_enum_t type, std::size_t size,
        mode_t mode, const void *addr,
-       const permissions &perm,
        ConstructFunc construct_func)
    {
       typedef detail::bool_<FileBased> file_like_t;
@@ -304,24 +241,24 @@ class managed_open_or_create_impl
       }
 
       if(type == detail::DoOpen && mode == read_write){
-         DeviceAbstraction tmp(open_only, id, read_write);
+         DeviceAbstraction tmp(open_only, m_name.c_str(), read_write);
          tmp.swap(dev);
          created = false;
       }
       else if(type == detail::DoOpen && mode == read_only){
-         DeviceAbstraction tmp(open_only, id, read_only);
+         DeviceAbstraction tmp(open_only, m_name.c_str(), read_only);
          tmp.swap(dev);
          created = false;
          ronly   = true;
       }
       else if(type == detail::DoOpen && mode == copy_on_write){
-         DeviceAbstraction tmp(open_only, id, read_only);
+         DeviceAbstraction tmp(open_only, m_name.c_str(), read_only);
          tmp.swap(dev);
          created = false;
          cow     = true;
       }
       else if(type == detail::DoCreate){
-         create_device<FileBased>(dev, id, size, perm, file_like_t());
+         create_device<FileBased>(dev, m_name.c_str(), size, file_like_t());
          created = true;
       }
       else if(type == detail::DoOpenOrCreate){
@@ -332,7 +269,7 @@ class managed_open_or_create_impl
          bool completed = false;
          while(!completed){
             try{
-               create_device<FileBased>(dev, id, size, perm, file_like_t());
+               create_device<FileBased>(dev, m_name.c_str(), size, file_like_t());
                created     = true;
                completed   = true;
             }
@@ -342,7 +279,7 @@ class managed_open_or_create_impl
                }
                else{
                   try{
-                     DeviceAbstraction tmp(open_only, id, read_write);
+                     DeviceAbstraction tmp(open_only, m_name.c_str(), read_write);
                      dev.swap(tmp);
                      created     = false;
                      completed   = true;
@@ -430,9 +367,6 @@ class managed_open_or_create_impl
          //All ok, just move resources to the external mapped region
          m_mapped_region.swap(region);
       }
-      if(StoreDevice){
-         this->DevHolder::get_device() = boost::interprocess::move(dev);
-      }
    }
 
    private:
@@ -441,6 +375,7 @@ class managed_open_or_create_impl
    {  detail::interprocess_tester::dont_close_on_destruction(m_mapped_region);  }
 
    mapped_region     m_mapped_region;
+   std::string       m_name;
 };
 
 template<class DeviceAbstraction>

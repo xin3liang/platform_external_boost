@@ -9,7 +9,7 @@
 #if !defined(FUSION_MACRO_05042005)
 #define FUSION_MACRO_05042005
 
-#define FUSION_MEMBER_DEFAULT_INIT(z, n, _)     m##n()
+#define FUSION_MEMBER_DEFAULT_INIT(z, n, _)     m##n(T##n())
 #define FUSION_MEMBER_INIT(z, n, _)             m##n(_##n)
 #define FUSION_COPY_INIT(z, n, _)               m##n(other.m##n)
 #define FUSION_MEMBER_DECL(z, n, _)             T##n m##n;
@@ -36,8 +36,8 @@
 
 #define N BOOST_PP_ITERATION()
 
-    template <BOOST_PP_ENUM_PARAMS(N, typename T)>
-    struct BOOST_PP_CAT(vector_data, N)
+    template <typename Derived, BOOST_PP_ENUM_PARAMS(N, typename T)>
+    struct BOOST_PP_CAT(vector_data, N) : sequence_base<Derived>
     {
         BOOST_PP_CAT(vector_data, N)()
             : BOOST_PP_ENUM(N, FUSION_MEMBER_DEFAULT_INIT, _) {}
@@ -73,11 +73,12 @@
 
     template <BOOST_PP_ENUM_PARAMS(N, typename T)>
     struct BOOST_PP_CAT(vector, N)
-      : BOOST_PP_CAT(vector_data, N)<BOOST_PP_ENUM_PARAMS(N, T)>
-      , sequence_base<BOOST_PP_CAT(vector, N)<BOOST_PP_ENUM_PARAMS(N, T)> >
+        : BOOST_PP_CAT(vector_data, N)<
+            BOOST_PP_CAT(vector, N)<BOOST_PP_ENUM_PARAMS(N, T)>
+          , BOOST_PP_ENUM_PARAMS(N, T)>
     {
         typedef BOOST_PP_CAT(vector, N)<BOOST_PP_ENUM_PARAMS(N, T)> this_type;
-        typedef BOOST_PP_CAT(vector_data, N)<BOOST_PP_ENUM_PARAMS(N, T)> base_type;
+        typedef BOOST_PP_CAT(vector_data, N)<this_type, BOOST_PP_ENUM_PARAMS(N, T)> base_type;
         typedef mpl::BOOST_PP_CAT(vector, N)<BOOST_PP_ENUM_PARAMS(N, T)> types;
         typedef vector_tag fusion_tag;
         typedef fusion_sequence_tag tag; // this gets picked up by MPL
@@ -104,7 +105,7 @@
         BOOST_PP_CAT(vector, N)(
             Sequence const& seq
 #if (N == 1)
-          , typename disable_if<is_convertible<Sequence, T0> >::type* /*dummy*/ = 0
+          , typename disable_if<is_convertible<Sequence, T0> >::type* dummy = 0
 #endif
             )
             : base_type(base_type::init_from_sequence(seq)) {}
@@ -132,14 +133,14 @@
 
         template<typename I>
         typename add_reference<typename mpl::at<types, I>::type>::type
-        at_impl(I)
+        at_impl(I i)
         {
             return this->at_impl(mpl::int_<I::value>());
         }
 
         template<typename I>
         typename add_reference<typename add_const<typename mpl::at<types, I>::type>::type>::type
-        at_impl(I) const
+        at_impl(I i) const
         {
             return this->at_impl(mpl::int_<I::value>());
         }

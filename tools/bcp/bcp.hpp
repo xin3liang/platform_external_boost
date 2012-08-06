@@ -9,12 +9,6 @@
 
 #include <boost/shared_ptr.hpp>
 
-#if defined(BOOST_FILESYSTEM_VERSION) && (BOOST_FILESYSTEM_VERSION != 3)
-# error "This library must be built with Boost.Filesystem version 3"
-#else
-#define BOOST_FILESYSTEM_VERSION 3
-#endif
-
 class bcp_application;
 typedef boost::shared_ptr<bcp_application> pbcp_application;
 
@@ -35,9 +29,6 @@ public:
    virtual void set_boost_path(const char* p) = 0;
    virtual void set_destination(const char* p) = 0;
    virtual void add_module(const char* p) = 0;
-   virtual void set_namespace(const char* name) = 0;
-   virtual void set_namespace_alias(bool) = 0;
-   virtual void set_namespace_list(bool) = 0;
 
    virtual int run() = 0;
 

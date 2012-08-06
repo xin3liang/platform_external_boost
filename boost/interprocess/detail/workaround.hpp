@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2005-2009. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2008. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -46,9 +46,8 @@
    #  if defined(__CYGWIN__)
       #define BOOST_INTERPROCESS_POSIX_SEMAPHORES_NO_UNLINK
    #  endif
-   //Some platforms have a limited (name length) named semaphore support
-   #elif (defined(__FreeBSD__) && (__FreeBSD__ >= 4)) || defined(__APPLE__)
-     # define BOOST_INTERPROCESS_POSIX_NAMED_SEMAPHORES   
+   //#elif defined(__APPLE__)
+   //# define BOOST_INTERPROCESS_POSIX_NAMED_SEMAPHORES   
    #endif 
 
    #if ((defined _V6_ILP32_OFFBIG)  &&(_V6_ILP32_OFFBIG   - 0 > 0)) ||\
@@ -77,9 +76,8 @@
    #  define BOOST_INTERPROCESS_POSIX_SHARED_MEMORY_OBJECTS
    #  endif
    //Mac OS has some non-conformant features like names limited to SHM_NAME_MAX
-   # elif defined (__APPLE__)
-//   #  define BOOST_INTERPROCESS_POSIX_SHARED_MEMORY_OBJECTS
-//   #  define BOOST_INTERPROCESS_POSIX_SHARED_MEMORY_OBJECTS_NO_GROW
+   //# elif defined (__APPLE__)
+   //#  define BOOST_INTERPROCESS_POSIX_SHARED_MEMORY_OBJECTS
    # endif 
    #endif
 
@@ -93,21 +91,22 @@
    # define BOOST_INTERPROCESS_POSIX_TIMEOUTS
    #endif 
 
+   //Some systems have filesystem-based resources, so the
+   //portable "/shmname" format does not work due to permission issues
+   //For those systems we need to form a path to a temporary directory:
+   //          hp-ux               tru64               vms               freebsd
+   #if defined(__hpux) || defined(__osf__) || defined(__vms) || (defined(__FreeBSD__) && (__FreeBSD__ < 8)) 
+   #define BOOST_INTERPROCESS_FILESYSTEM_BASED_POSIX_RESOURCES
+   #endif
 
    #ifdef BOOST_INTERPROCESS_POSIX_SHARED_MEMORY_OBJECTS
-      //Some systems have filesystem-based resources, so the
-      //portable "/shmname" format does not work due to permission issues
-      //For those systems we need to form a path to a temporary directory:
-      //          hp-ux               tru64               vms               freebsd
-      #if defined(__hpux) || defined(__osf__) || defined(__vms) || (defined(__FreeBSD__) && (__FreeBSD__ < 7)) 
+      #if defined(BOOST_INTERPROCESS_FILESYSTEM_BASED_POSIX_RESOURCES)
       #define BOOST_INTERPROCESS_FILESYSTEM_BASED_POSIX_SHARED_MEMORY
-      #elif defined(__FreeBSD__)
-      #define BOOST_INTERPROCESS_RUNTIME_FILESYSTEM_BASED_POSIX_SHARED_MEMORY
       #endif
    #endif
 
    #ifdef BOOST_INTERPROCESS_POSIX_NAMED_SEMAPHORES
-      #if defined(__osf__) || defined(__vms)
+      #if defined(BOOST_INTERPROCESS_FILESYSTEM_BASED_POSIX_RESOURCES)
       #define BOOST_INTERPROCESS_FILESYSTEM_BASED_POSIX_SEMAPHORES
       #endif
    #endif
@@ -118,7 +117,7 @@
 
 #endif
 
-#if    !defined(BOOST_NO_RVALUE_REFERENCES) && !defined(BOOST_NO_VARIADIC_TEMPLATES)\
+#if     defined(BOOST_HAS_RVALUE_REFS) && defined(BOOST_HAS_VARIADIC_TMPL)\
     && !defined(BOOST_INTERPROCESS_DISABLE_VARIADIC_TMPL)
 #define BOOST_INTERPROCESS_PERFECT_FORWARDING
 #endif

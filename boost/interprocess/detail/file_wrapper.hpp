@@ -25,9 +25,11 @@ namespace detail{
 class file_wrapper
 {
    /// @cond
-   BOOST_INTERPROCESS_MOVABLE_BUT_NOT_COPYABLE(file_wrapper)
+   file_wrapper(file_wrapper&);
+   file_wrapper & operator=(file_wrapper&);
    /// @endcond
    public:
+   BOOST_INTERPROCESS_ENABLE_MOVE_EMULATION(file_wrapper)
 
    //!Default constructor.
    //!Represents an empty file_wrapper.
@@ -35,25 +37,24 @@ class file_wrapper
 
    //!Creates a file object with name "name" and mode "mode", with the access mode "mode"
    //!If the file previously exists, throws an error.
-   file_wrapper(create_only_t, const char *name, mode_t mode, const permissions &perm = permissions())
-   {  this->priv_open_or_create(detail::DoCreate, name, mode, perm);  }
+   file_wrapper(create_only_t, const char *name, mode_t mode)
+   {  this->priv_open_or_create(detail::DoCreate, name, mode);  }
 
    //!Tries to create a file with name "name" and mode "mode", with the
    //!access mode "mode". If the file previously exists, it tries to open it with mode "mode".
    //!Otherwise throws an error.
-   file_wrapper(open_or_create_t, const char *name, mode_t mode, const permissions &perm  = permissions())
-   {  this->priv_open_or_create(detail::DoOpenOrCreate, name, mode, perm);  }
+   file_wrapper(open_or_create_t, const char *name, mode_t mode)
+   {  this->priv_open_or_create(detail::DoOpenOrCreate, name, mode);  }
 
    //!Tries to open a file with name "name", with the access mode "mode". 
    //!If the file does not previously exist, it throws an error.
    file_wrapper(open_only_t, const char *name, mode_t mode)
-   {  this->priv_open_or_create(detail::DoOpen, name, mode, permissions());  }
+   {  this->priv_open_or_create(detail::DoOpen, name, mode);  }
 
    //!Moves the ownership of "moved"'s file to *this. 
    //!After the call, "moved" does not represent any file. 
    //!Does not throw
    file_wrapper(BOOST_INTERPROCESS_RV_REF(file_wrapper) moved)
-      :  m_handle(file_handle_t(detail::invalid_file()))
    {  this->swap(moved);   }
 
    //!Moves the ownership of "moved"'s file to *this.
@@ -101,7 +102,7 @@ class file_wrapper
    //!Closes a previously opened file mapping. Never throws.
    void priv_close();
    //!Closes a previously opened file mapping. Never throws.
-   bool priv_open_or_create(detail::create_enum_t type, const char *filename, mode_t mode, const permissions &perm);
+   bool priv_open_or_create(detail::create_enum_t type, const char *filename, mode_t mode);
 
    file_handle_t  m_handle;
    mode_t      m_mode;
@@ -137,8 +138,7 @@ inline mode_t file_wrapper::get_mode() const
 inline bool file_wrapper::priv_open_or_create
    (detail::create_enum_t type, 
     const char *filename,
-    mode_t mode,
-    const permissions &perm = permissions())
+    mode_t mode)
 {
    m_filename = filename;
 
@@ -153,10 +153,10 @@ inline bool file_wrapper::priv_open_or_create
          m_handle = open_existing_file(filename, mode);
       break;
       case detail::DoCreate:
-         m_handle = create_new_file(filename, mode, perm);
+         m_handle = create_new_file(filename, mode);
       break;
       case detail::DoOpenOrCreate:
-         m_handle = create_or_open_file(filename, mode, perm);
+         m_handle = create_or_open_file(filename, mode);
       break;
       default:
          {

@@ -21,7 +21,6 @@
 #include <boost/math/special_functions/detail/bessel_i0.hpp>
 #include <boost/math/special_functions/detail/bessel_i1.hpp>
 #include <boost/math/special_functions/detail/bessel_kn.hpp>
-#include <boost/math/special_functions/detail/iconv.hpp>
 #include <boost/math/special_functions/sin_pi.hpp>
 #include <boost/math/special_functions/cos_pi.hpp>
 #include <boost/math/special_functions/sinc.hpp>
@@ -95,9 +94,9 @@ inline T bessel_j_small_z_series(T v, T x, const Policy& pol)
    boost::uintmax_t max_iter = policies::get_max_series_iterations<Policy>();
 #if BOOST_WORKAROUND(__BORLANDC__, BOOST_TESTED_AT(0x582))
    T zero = 0;
-   T result = boost::math::tools::sum_series(s, boost::math::policies::get_epsilon<T, Policy>(), max_iter, zero);
+   T result = boost::math::tools::sum_series(s, boost::math::policies::digits<T, Policy>(), max_iter, zero);
 #else
-   T result = boost::math::tools::sum_series(s, boost::math::policies::get_epsilon<T, Policy>(), max_iter);
+   T result = boost::math::tools::sum_series(s, boost::math::policies::digits<T, Policy>(), max_iter);
 #endif
    policies::check_series_iterations("boost::math::bessel_j_small_z_series<%1%>(%1%,%1%)", max_iter, pol);
    return result;
@@ -111,9 +110,9 @@ inline T sph_bessel_j_small_z_series(unsigned v, T x, const Policy& pol)
    boost::uintmax_t max_iter = policies::get_max_series_iterations<Policy>();
 #if BOOST_WORKAROUND(__BORLANDC__, BOOST_TESTED_AT(0x582))
    T zero = 0;
-   T result = boost::math::tools::sum_series(s, boost::math::policies::get_epsilon<T, Policy>(), max_iter, zero);
+   T result = boost::math::tools::sum_series(s, boost::math::policies::digits<T, Policy>(), max_iter, zero);
 #else
-   T result = boost::math::tools::sum_series(s, boost::math::policies::get_epsilon<T, Policy>(), max_iter);
+   T result = boost::math::tools::sum_series(s, boost::math::policies::digits<T, Policy>(), max_iter);
 #endif
    policies::check_series_iterations("boost::math::sph_bessel_j_small_z_series<%1%>(%1%,%1%)", max_iter, pol);
    return result * sqrt(constants::pi<T>() / 4);
@@ -146,13 +145,8 @@ T cyl_bessel_j_imp(T v, T x, const bessel_no_int_tag& t, const Policy& pol)
             "Got v = %1%, but require v >= 0 or a negative integer: the result would be complex.", v, pol);
    
    
-   if((v >= 0) && ((x < 1) || (v > x * x / 4) || (x < 5)))
+   if((v >= 0) && ((x < 1) || (v > x * x / 4)))
    {
-      //
-      // This series will actually converge rapidly for all small
-      // x - say up to x < 20 - but the first few terms are large
-      // and divergent which leads to large errors :-(
-      //
       return bessel_j_small_z_series(v, x, pol);
    }
    
@@ -165,10 +159,13 @@ template <class T, class Policy>
 inline T cyl_bessel_j_imp(T v, T x, const bessel_maybe_int_tag&, const Policy& pol)
 {
    BOOST_MATH_STD_USING  // ADL of std names.
-   int ival = detail::iconv(v, pol);
-   if((abs(ival) < 200) && (0 == v - ival))
+   typedef typename bessel_asymptotic_tag<T, Policy>::type tag_type;
+   if((fabs(v) < 200) && (floor(v) == v))
    {
-      return bessel_jn(ival/*iround(v, pol)*/, x, pol);
+      if(fabs(x) > asymptotic_bessel_j_limit<T>(v, tag_type()))
+         return asymptotic_bessel_j_large_x_2(v, x);
+      else
+         return bessel_jn(iround(v, pol), x, pol);
    }
    return cyl_bessel_j_imp(v, x, bessel_no_int_tag(), pol);
 }
@@ -177,7 +174,16 @@ template <class T, class Policy>
 inline T cyl_bessel_j_imp(int v, T x, const bessel_int_tag&, const Policy& pol)
 {
    BOOST_MATH_STD_USING
-   return bessel_jn(v, x, pol);
+   typedef typename bessel_asymptotic_tag<T, Policy>::type tag_type;
+   if(fabs(x) > asymptotic_bessel_j_limit<T>(abs(v), tag_type()))
+   {
+      T r = asymptotic_bessel_j_large_x_2(static_cast<T>(abs(v)), x);
+      if((v < 0) && (v & 1))
+         r = -r;
+      return r;
+   }
+   else
+      return bessel_jn(v, x, pol);
 }
 
 template <class T, class Policy>

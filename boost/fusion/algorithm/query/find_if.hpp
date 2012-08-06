@@ -10,10 +10,6 @@
 #include <boost/fusion/algorithm/query/detail/find_if.hpp>
 #include <boost/fusion/sequence/intrinsic/begin.hpp>
 #include <boost/fusion/sequence/intrinsic/end.hpp>
-#include <boost/fusion/iterator/value_of.hpp>
-#include <boost/mpl/bind.hpp>
-#include <boost/mpl/lambda.hpp>
-#include <boost/mpl/quote.hpp>
 #include <boost/utility/enable_if.hpp>
 #include <boost/type_traits/is_const.hpp>
 
@@ -24,18 +20,13 @@ namespace boost { namespace fusion
         template <typename Sequence, typename Pred>
         struct find_if
         {
-            typedef
+            typedef typename
                 detail::static_find_if<
                     typename result_of::begin<Sequence>::type
                   , typename result_of::end<Sequence>::type
-                  , mpl::bind1<
-                        typename mpl::lambda<Pred>::type
-                      , mpl::bind1<mpl::quote1<value_of>,mpl::_1>
-                    >
-                >
-            filter;
-
-            typedef typename filter::type type;
+                  , Pred
+                >::type
+            type;
         };
     }
 
@@ -47,7 +38,14 @@ namespace boost { namespace fusion
         >::type
     find_if(Sequence& seq)
     {
-        typedef typename result_of::find_if<Sequence, Pred>::filter filter;
+        typedef
+            detail::static_find_if<
+                typename result_of::begin<Sequence>::type
+              , typename result_of::end<Sequence>::type
+              , Pred
+            >
+        filter;
+
         return filter::call(fusion::begin(seq));
     }
 
@@ -55,7 +53,14 @@ namespace boost { namespace fusion
     inline typename result_of::find_if<Sequence const, Pred>::type const
     find_if(Sequence const& seq)
     {
-        typedef typename result_of::find_if<Sequence const, Pred>::filter filter;
+        typedef
+            detail::static_find_if<
+                typename result_of::begin<Sequence const>::type
+              , typename result_of::end<Sequence const>::type
+              , Pred
+            >
+        filter;
+
         return filter::call(fusion::begin(seq));
     }
 }}

@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2005-2009. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2008. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -56,18 +56,12 @@ struct char_traits;
 namespace boost { namespace interprocess {
 
 //////////////////////////////////////////////////////////////////////////////
-//                            permissions
-//////////////////////////////////////////////////////////////////////////////
-
-class permissions;
-
-//////////////////////////////////////////////////////////////////////////////
 //                            shared_memory
 //////////////////////////////////////////////////////////////////////////////
 
 class shared_memory_object;
 
-#if defined (BOOST_INTERPROCESS_WINDOWS) || defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
+#if defined (BOOST_INTERPROCESS_WINDOWS)
 class windows_shared_memory;
 #endif   //#if defined (BOOST_INTERPROCESS_WINDOWS)
 
@@ -239,7 +233,7 @@ wmanaged_shared_memory;
 //                      Windows shared memory managed memory classes
 //////////////////////////////////////////////////////////////////////////////
 
-#if defined (BOOST_INTERPROCESS_WINDOWS) || defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
+#if defined (BOOST_INTERPROCESS_WINDOWS)
 
 template <class CharType
          ,class MemoryAlgorithm
@@ -258,10 +252,9 @@ typedef basic_managed_windows_shared_memory
    ,iset_index>
 wmanaged_windows_shared_memory;
 
-#endif   //#if defined (BOOST_INTERPROCESS_WINDOWS)
+#else
 
-#if defined(BOOST_INTERPROCESS_XSI_SHARED_MEMORY_OBJECTS) || defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
-
+#if defined(BOOST_INTERPROCESS_XSI_SHARED_MEMORY_OBJECTS)
 template <class CharType
          ,class MemoryAlgorithm
          ,template<class IndexConfig> class IndexType>
@@ -278,8 +271,9 @@ typedef basic_managed_xsi_shared_memory
    ,rbtree_best_fit<mutex_family>
    ,iset_index>
 wmanaged_xsi_shared_memory;
-
 #endif //#if defined(BOOST_INTERPROCESS_XSI_SHARED_MEMORY_OBJECTS)
+
+#endif   //#if defined (BOOST_INTERPROCESS_WINDOWS)
 
 //////////////////////////////////////////////////////////////////////////////
 //                      Fixed address shared memory

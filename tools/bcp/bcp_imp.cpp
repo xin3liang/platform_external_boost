@@ -18,9 +18,7 @@
 #include <string>
 
 bcp_implementation::bcp_implementation()
-  : m_list_mode(false), m_list_summary_mode(false), m_license_mode(false), m_cvs_mode(false), 
-  m_svn_mode(false), m_unix_lines(false), m_scan_mode(false), m_bsl_convert_mode(false), 
-  m_bsl_summary_mode(false), m_namespace_alias(false), m_list_namespaces(false)
+  : m_list_mode(false), m_list_summary_mode(false), m_license_mode(false), m_cvs_mode(false), m_svn_mode(false), m_unix_lines(false), m_scan_mode(false), m_bsl_convert_mode(false), m_bsl_summary_mode(false)
 {
 }
 
@@ -81,7 +79,7 @@ void bcp_implementation::enable_unix_lines()
 void bcp_implementation::set_boost_path(const char* p)
 {
    // Hack to strip trailing slashes from the path 
-   m_boost_path = (fs::path(p) / "boost").parent_path(); 
+   m_boost_path = (fs::path(p, fs::native) / "boost").parent_path(); 
    fs::path check = m_boost_path / "boost" / "version.hpp";
    if(!fs::exists(check))
    {
@@ -94,28 +92,12 @@ void bcp_implementation::set_boost_path(const char* p)
 
 void bcp_implementation::set_destination(const char* p)
 {
-   m_dest_path = fs::path(p);
+   m_dest_path = fs::path(p, fs::native);
 }
 
 void bcp_implementation::add_module(const char* p)
 {
    m_module_list.push_back(p);
-}
-
-void bcp_implementation::set_namespace(const char* name)
-{
-   m_namespace_name = name;
-}
-
-void bcp_implementation::set_namespace_alias(bool b)
-{
-   m_namespace_alias = b;
-}
-
-void bcp_implementation::set_namespace_list(bool b)
-{
-   m_list_namespaces = b;
-   m_list_mode = b;
 }
 
 fs::path get_short_path(const fs::path& p)
@@ -140,7 +122,7 @@ int bcp_implementation::run()
    if(!m_list_mode && !m_license_mode && !fs::exists(m_dest_path))
    {
       std::string msg("Destination path does not exist: ");
-      msg.append(m_dest_path.string());
+      msg.append(m_dest_path.native_file_string());
       std::runtime_error e(msg);
       boost::throw_exception(e);
    }
@@ -170,7 +152,7 @@ int bcp_implementation::run()
      fs::ifstream in(blanket_permission);
      std::string line;
      while (std::getline(in, line)) {
-       static const boost::regex e("([^(]+)\\(");
+       boost::regex e("([^(]+)\\(");
        boost::smatch result;
        if (boost::regex_search(line, result, e))
          m_bsl_authors.insert(format_authors_name(result[1]));
@@ -190,8 +172,15 @@ int bcp_implementation::run()
       //
       fs::path module;
       fs::path exmodule;
-      module = fs::path(*i);
-      exmodule = fs::path(*i + ".hpp");
+      try{
+         module = fs::path(*i);
+         exmodule = fs::path(*i + ".hpp");
+      }
+      catch(...)
+      {
+         module = fs::path(*i, fs::native);
+         exmodule = fs::path(*i + ".hpp", fs::native);
+      }
       
       if(m_scan_mode)
       {
@@ -232,33 +221,6 @@ int bcp_implementation::run()
    //
    // now perform output:
    //
-   if(m_list_namespaces)
-   {
-      // List the namespaces, in two lists, headers and source files
-      // first, then everything else afterwards:
-      //
-      boost::regex important_file("boost/.*|libs/[^/]*/(?:[^/]*/)?/src/.*");
-      std::map<std::string, fs::path>::const_iterator i, j;
-      i = m_top_namespaces.begin();
-      j = m_top_namespaces.end();
-      std::cout << "\n\nThe top level namespaces found for header and source files were:\n";
-      while(i != j)
-      {
-         if(regex_match(i->second.string(), important_file))
-            std::cout << i->first << " (from " << i->second << ")" << std::endl;
-         ++i;
-      }
-
-      i = m_top_namespaces.begin();
-      std::cout << "\n\nThe top level namespaces found for all other source files were:\n";
-      while(i != j)
-      {
-         if(!regex_match(i->second.string(), important_file))
-            std::cout << i->first << " (from " << i->second << ")" << std::endl;
-         ++i;
-      }
-      return 0;
-   }
    std::set<fs::path, path_less>::iterator m, n;
    std::set<fs::path, path_less> short_paths;
    m = m_copy_paths.begin();

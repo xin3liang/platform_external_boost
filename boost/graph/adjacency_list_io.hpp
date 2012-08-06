@@ -94,7 +94,7 @@ void getSubset
 }
 
 inline void getSubset
-( no_property&, const no_property& )
+( no_property& p, const no_property& s )
 {
 }
 

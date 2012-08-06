@@ -16,10 +16,16 @@ rm -r -f windows
 echo "Exporting files from subversion..."
 svn export --non-interactive --native-eol CRLF http://svn.boost.org/svn/boost/branches/release windows
 
-#echo "Copying docs from posix tree..."
-#cp --recursive posix/doc/html windows/doc
+#echo "Building documentation..."
+#pushd windows/doc
+#bjam-cygwin --v2 --toolset=gcc &>../../windows-bjam.log
+#popd
 
-echo "Renaming..."
+echo "Copying docs from posix tree..."
+cp --recursive posix/doc/html windows/doc
+
+echo "Cleaning up and renaming..."
+rm -r windows/bin.v2
 SNAPSHOT_DATE=`eval date +%Y-%m-%d`
 echo SNAPSHOT_DATE is $SNAPSHOT_DATE
 mv windows boost-windows-$SNAPSHOT_DATE
@@ -29,16 +35,13 @@ mv windows boost-windows-$SNAPSHOT_DATE
 
 echo "Building .7z..."
 rm -f windows.7z
-# On Windows, 7z comes from the 7-Zip package, not Cygwin,
-# so path must include C:\Program Files\7-Zip.
 7z a -r windows.7z boost-windows-$SNAPSHOT_DATE
 
 echo "Reverting name..."
 mv boost-windows-$SNAPSHOT_DATE windows
 
 echo "Creating ftp script..."
-cat <user.txt >>windows.ftp
-echo "dir" >>windows.ftp
+echo "dir" >windows.ftp
 echo "binary" >>windows.ftp
 
 #echo "put windows.zip" >>windows.ftp
@@ -52,7 +55,7 @@ echo "dir" >>windows.ftp
 echo "bye" >>windows.ftp
 
 echo "Running ftp script..."
-# This is the Windows ftp client
-ftp -n -i -d -s:windows.ftp boost.cowic.de
+# use cygwin ftp rather than windows ftp
+/usr/bin/ftp -v -i boost.cowic.de <windows.ftp
 
-echo "Windows snapshot complete!"
+echo "Windows snapshot complete!

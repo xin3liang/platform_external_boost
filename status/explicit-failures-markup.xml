@@ -478,17 +478,6 @@
         </test>
     </library>
 
-    <!-- chrono -->
-    <library name="chrono">
-      <mark-unusable>
-        <toolset name="borland-*"/>
-        <toolset name="pathscale*"/>
-        <note author="Vicente J. Botet Escriba">
-            The compiler does not support features that are essential for the library.
-        </note>
-      </mark-unusable>
-    </library>
-
     <!-- circular_buffer -->
     <library name="circular_buffer">
         <mark-expected-failures>
@@ -618,31 +607,19 @@
                 <toolset name="borland-5.6*"/>
                 <toolset name="borland-5.8*"/>
                 <toolset name="borland-5.9*"/>
-                <toolset name="intel-darwin-11.*"/>
-                <toolset name="gcc-3.4.0*"/>
+                <toolset name="gcc-3.4*"/>
                 <toolset name="gcc-4.1*"/>
-                <toolset name="gcc-4.2.0*"/>
+                <toolset name="gcc-4.2*"/>
                 <toolset name="gcc-mingw-3.4*"/>
                 <toolset name="sun-5.7*"/>
                 <toolset name="sun-5.8*"/>
                 <toolset name="sun-5.9*"/>
-                <toolset name="sun-5.10*"/>
                 <toolset name="msvc-8.0*"/>
                 <toolset name="msvc-9.0*"/>
-                <toolset name="msvc-10.0*"/>
                 <toolset name="msvc-7.1*"/>
                 <toolset name="acc"/>
                 <note author="Alexander Nasonov">
-                    Conversion double-string-double may give a different value (or even throw) on many compilers
-                </note>
-            </mark-failure>
-        </test>
-        <test name="lexical_cast_vc8_bug_test">
-            <mark-failure>
-                <toolset name="msvc-8.0*"/>
-                <note author="Alexander Nasonov">
-		    I don't have an access to Windows and VC++ to
-		    investigate this issue.
+                    Conversion double-string-double may give a different value (or even throw) on many compilers 
                 </note>
             </mark-failure>
         </test>
@@ -1408,7 +1385,7 @@
           <toolset name="sun-5.7"/>
           <toolset name="sun-5.8"/>
           <note author="Beman Dawes">
-              The library works well with versions of this compiler 5.9 and later
+              The library works well with versions of this compiler 5.9 and later 
           </note>
         </mark-expected-failures>
         <mark-expected-failures>
@@ -1691,31 +1668,6 @@
         </mark-expected-failures>
     </library>
 
-    <!-- functional/factory -->
-    <library name="functional/factory">
-        <mark-expected-failures>
-            <test name="factory_with_allocator"/>
-            <toolset name="borland-*"/>
-            <note author="Tobias Schwinger">
-              Probably broken const conversion with that compiler.
-            </note>
-        </mark-expected-failures>
-    </library>
-
-    <!-- functional/forward -->
-    <library name="functional/foward">
-        <mark-unusable>
-            <toolset name="msvc-7.0*"/>
-            <toolset name="msvc-7.1*"/>
-            <toolset name="sun-5.*"/>
-            <toolset name="vacpp*"/>
-            <toolset name="borland-*"/>
-            <note author="Tobias Schwinger">
-              This compiler is currently not supported.
-            </note>
-        </mark-unusable>
-    </library>
-
     <!-- functional/hash -->
     <library name="functional/hash">
         <mark-expected-failures>
@@ -1794,14 +1746,6 @@
                 in a namespace don't appear to be found by ADL.
             </note>
         </mark-expected-failures>
-
-        <mark-expected-failures>
-            <test name="container_fwd_gcc_debug"/>
-            <toolset name="darwin-4.2"/>
-            <note author="Daniel James">
-              Debug containers aren't supported on Apple's version of gcc 4.2.
-            </note>
-        </mark-expected-failures>
     </library>
 
 
@@ -1834,47 +1778,14 @@
             <toolset name="acc"/>
             <note author="Tobias Schwinger">
                 Those failures are due to not quite const-correct overload
-                resolution. The complaints from the test suite should rarely
+                resolution. The complaints from the test suite should rarely 
                 matter in practice - the corresponding components are basically
                 usable. With aCC6, when compiled in strict ansi mode, the test
                 succeeds.
             </note>
         </mark-expected-failures>
     </library>
-    
-    <!-- geometry -->
-    <library name="geometry">
-        <mark-unusable>
-            <toolset name="borland-cb2009"/>
-            <toolset name="borland-cb2010"/>
-            <toolset name="sun-5.10"/>
-            <toolset name="vacpp"/>
-            <toolset name="vacpp-10.1"/>
-            <toolset name="msvc-7.1"/>
-            <note author="Barend Gehrels">
-                These compilers do not support features that are essential for the library.
-            </note>
-        </mark-unusable>
-        <mark-unusable>
-            <toolset name="intel-darwin-11.1"/>
-            <note author="Barend Gehrels">
-                Intel 11.1 on Darwin raises a SIGSEGV in almost all unit tests.
-            </note>
-        </mark-unusable>
-        <mark-unusable>
-            <toolset name="pgi-11.2"/>
-            <note author="Barend Gehrels">
-                pgi 11.1 does not support BOOST_AUTO and is not configured for UBLAS
-            </note>
-        </mark-unusable>
-        <mark-unusable>
-            <toolset name="msvc-9.0~wm5~stlport5.2"/>
-            <note author="Barend Gehrels">
-                This configruation is not well configured for UBLAS
-            </note>
-        </mark-unusable>
-    </library>
-    
+
     <!-- gil -->
     <library name="gil">
       <mark-expected-failures>
@@ -1894,15 +1805,37 @@
         <mark-unusable>
             <toolset name="borland-5.*"/>
             <toolset name="borland-6.*"/>
-            <toolset name="borland-cb2009"/>
-            <toolset name="borland-cb2010"/>
-            <toolset name="sun-5.9"/>
+            <!-- Open64 and Pathscale ICE on almost all test cases, often
+            because of http://gcc.gnu.org/bugzilla/show_bug.cgi?id=17327;
+            property type detection fails because it uses enum types as tags.
+            -->
+            <toolset name="gcc-open64"/>
+            <toolset name="pathscale-3.1"/>
+            <!-- vacpp ICEs on many of the tests -->
+            <toolset name="vacpp"/>
         </mark-unusable>
         <mark-expected-failures>
-          <test name="grid_graph_cc"/>
-          <test name="grid_graph_test"/>
-          <toolset name="msvc-7.1"/>
-          <note author="Jeremiah Willcock" refid="2"/>
+          <test name="graphviz_test"/>
+          <toolset name="vc-8_0"/>
+          <toolset name="msvc-8_0"/>
+          <toolset name="intel-vc71-win-9.1"/>
+          <note refid="1" author="Doug Gregor"/>
+        </mark-expected-failures>
+        <mark-expected-failures>
+          <test name="graphviz_test"/>
+          <toolset name="como-4_3_3-vc7_1"/>
+          <note refid="3" author="Doug Gregor"/>
+        </mark-expected-failures>
+        <mark-expected-failures>
+            <test name="bundled_properties"/>
+            <toolset name="qcc-3.3*"/>
+            <note author="Jim Douglas" date="18 Feb 06" refid="27"/>
+        </mark-expected-failures>
+        <mark-expected-failures>
+          <test name="kolmogorov_max_flow_test"/>
+          <test name="max_flow_test"/>
+          <toolset name="acc*"/>
+          <note author="Markus Schoepflin" refid="45"/>
         </mark-expected-failures>
     </library>
 
@@ -1916,7 +1849,7 @@
                 When compiling with aC++, depending on system load, the compile time may exceed
                 specified timeout value. The test passes when the timeout value is increased.
                 When compiling with GCC, linker takes segmentation fault.
-                In the HP bug tracking system, this issue is tracked as QuIX ID: QXCR1000836120.
+                In the HP bug tracking system, this issue is tracked as QuIX ID: QXCR1000836120.  
             </note>
         </mark-expected-failures>
     </library>
@@ -1937,6 +1870,7 @@
             <toolset name="mipspro"/>
             <toolset name="acc*"/>
             <toolset name="msvc-8.0~wm5*"/>
+            <toolset name="vacpp*"/>
             <toolset name="pathscale*"/>
             <toolset name="intel-linux-8.*"/>
             <toolset name="gcc-3.4.6_linux_ia64"/>
@@ -1950,6 +1884,7 @@
     <library name="intrusive">
         <mark-unusable>
             <toolset name="borland-5.*"/>
+            <toolset name="sun-5.*"/>
             <toolset name="msvc-6.5*"/>
             <toolset name="cw-9.*"/>
             <toolset name="gcc-2.95*"/>
@@ -1958,6 +1893,7 @@
             <toolset name="gcc-3.2*"/>
             <toolset name="gcc-3.3*"/>
             <toolset name="mipspro"/>
+            <toolset name="vacpp*"/>
             <toolset name="pathscale*"/>
             <toolset name="intel-linux-8.*"/>
             <note author="Ion Gazta&#241;aga">
@@ -2162,7 +2098,7 @@
             <toolset name="vacpp"/>
             <note author="Jonathan Turkanis" date="06 Jan 2008">
                 "restrict" is treated as a keyword on this platform (as in C99);
-                use the alias "slice" instead, defined in
+                use the alias "slice" instead, defined in 
                 "boost/iostreams/slice.hpp."
             </note>
         </mark-expected-failures>
@@ -2186,8 +2122,8 @@
             <test name="stream_offset_64bit_test"/>
             <toolset name="borland-*"/>
             <note author="Jonathan Turkanis" date="04 Jan 2008">
-                In the Dinkumware standard library, streampos relies on fpos_t
-                to store stream offsets, but fpos_t is defined as a 32-bit
+                In the Dinkumware standard library, streampos relies on fpos_t 
+                to store stream offsets, but fpos_t is defined as a 32-bit 
                 long by the Borland runtime library. In Borland's modified
                 version of STLPort, streampos relies on streamoff to store
                 stream offsets, but streamoff is defined to be a 32-bit long.
@@ -2205,8 +2141,8 @@
             <test name="stream_offset_64bit_test"/>
             <toolset name="vacpp*"/>
             <note author="Jonathan Turkanis" date="09 Jan 2008">
-                On this platform, streampos is an alias for fpos, whose
-                implementation stores stream offsets using streamsize and
+                On this platform, streampos is an alias for fpos, whose 
+                implementation stores stream offsets using streamsize and 
                 fpos_t; both of the latter types are 32-bit
             </note>
         </mark-expected-failures>
@@ -2227,8 +2163,8 @@
             <test name="stream_offset_64bit_test"/>
             <toolset name="gcc-4.2"/>
             <note author="Jonathan Turkanis" date="09 Jan 2008">
-              The following applies only to gcc-4.2 using the stdcxx
-              standard library: On this platform, streampos is an alias for
+              The following applies only to gcc-4.2 using the stdcxx 
+              standard library: On this platform, streampos is an alias for 
               ptrdiff_t, which is an alias for a 32-bit type
             </note>
         </mark-expected-failures>
@@ -2582,78 +2518,35 @@ for more information.
             <toolset name="gcc-3.4.6_linux_ia64"/>
             <toolset name="gcc-4.2.*"/>
             <toolset name="gcc-4.1.2_sunos_i86pc"/>
-                <note author="Fernando Cacciola" id="optional-compiler-bug">
-                <p>This failure is caused by a compiler bug, and as far as we can 
-                tell, can't be worked around in the library, although we think 
-                the library might be made safer with respect to this bug.</p>
-
-                <p>Specifics: the following simple test fails when it should succeed.</p>
-                <pre>
-                #include &lt;cassert&gt;
-
-                int const x = 0;
-                struct A
-                {
-                   A(int const&amp; y)
-                   {
-                     assert(&amp;x == &amp;y);
-                   }
-                };
-
-                int main()
-                {
-                    A a(x);  // direct initialization works fine
-                    A b = x; // copy initialization causes x to be copied before it is bound
-                }
-                </pre>
-
-                The possible safety enhancement would be to cause the constructor 
-                in question to be explicit for optional&lt;T const&amp;&gt;; that 
-                would prevent copy initialization.
-                </note>
+                <note author="Fernando Cacciola" refid="2"/>
         </mark-expected-failures>
         <mark-expected-failures>
             <test name="optional_test_ref_fail1"/>
             <toolset name="borland-5.6*"/>
             <toolset name="borland-5.8*"/>
             <toolset name="borland-5.9*"/>
-            <note author="Fernando Cacciola" refid="optional-compiler-bug"/>
+            <note author="Fernando Cacciola" refid="2"/>
         </mark-expected-failures>
         <mark-expected-failures>
             <test name="optional_test_fail3a"/>
             <toolset name="gcc-3_3-darwin"/>
-            <note author="Fernando Cacciola" refid="optional-compiler-bug"/>
+            <note author="Fernando Cacciola" refid="2"/>
         </mark-expected-failures>
         <mark-expected-failures>
             <test name="optional_test_inplace_fail2"/>
             <toolset name="gcc-3_3-darwin"/>
-            <note author="Fernando Cacciola" refid="optional-compiler-bug"/>
+            <note author="Fernando Cacciola" refid="2"/>
         </mark-expected-failures>
-    </library>
-    
-    <!-- phoenix -->
-    <library name="phoenix">
-      <mark-unusable>
-        <toolset name="sun-5.7"/>
-        <toolset name="sun-5.8"/>
-        <toolset name="sun-5.9"/>
-        <toolset name="sun-5.10"/>
-        <toolset name="borland-*"/>
-        <toolset name="vacpp*"/>
-        <note author="Thomas Heller" id="phoenix-incompatible-compilers">
-            These compilers don't work with phoenix.
-            This is due to the fact that phoenix uses proto
-        </note>
-        </mark-unusable>
         <mark-expected-failures>
-            <test name="member"/>
-            <toolset name="msvc*"/>
-            <note author="Thomas Heller" id="phoenix-operator-member-bug">
-                MSVC seems to have a code generation bug showing up when using operator->* with a member variable
+            <test name="optional_test"/>
+            <toolset name="msvc-7.1"/>
+            <note author="Niels Dekker" date="2008-05-12">
+            MSVC 2003 (7.1) does not always do argument-dependent lookup (ADL), when it should.
+            This causes test failures when swapping boost::optional&lt;T&gt;, for
+            T = optional_swap_test::template_whose_default_ctor_should_be_used&lt;char&gt;.
             </note>
         </mark-expected-failures>
     </library>
-
 
     <library name="pool">
       <mark-unusable>
@@ -2677,9 +2570,7 @@ for more information.
         <toolset name="sun-5.7"/>
         <toolset name="sun-5.8"/>
         <toolset name="sun-5.9"/>
-        <toolset name="sun-5.10"/>
         <toolset name="borland-*"/>
-        <toolset name="vacpp"/>
       </mark-unusable>
     </library>
 
@@ -2920,37 +2811,10 @@ for more information.
             <toolset name="*"/>
             <note refid="40" author="Boris Gubenko"/>
         </mark-expected-failures>
-        <mark-expected-failures>
-            <test name="sp_convertible_test"/>
-            <test name="wp_convertible_test"/>
-            <test name="ip_convertible_test"/>
-            <toolset name="borland-*"/>
-            <note refid="31" author="Peter Dimov"/>
-        </mark-expected-failures>
    </library>
 
-    <!-- spirit (v2) -->
+    <!-- spirit -->
     <library name="spirit">
-      <mark-unusable>
-	<toolset name="sun-5.7"/>
-	<toolset name="sun-5.8"/>
-        <toolset name="sun-5.9"/>
-        <toolset name="sun-5.10"/>
-	<toolset name="vacpp*"/>
-	<toolset name="borland-*"/>
-      </mark-unusable>
-    </library>
-
-    <!-- spirit (v2) repository -->
-    <library name="spirit/repository">
-      <mark-unusable>
-        <toolset name="borland-cb2009"/>
-        <toolset name="borland-cb2010"/>
-      </mark-unusable>
-    </library>
-
-    <!-- spirit (classic) -->
-    <library name="spirit/classic">
         <mark-unusable>
             <toolset name="msvc-6.5*"/>
             <toolset name="borland-5.5*"/>
@@ -3794,12 +3658,7 @@ for more information.
             <test name="test3"/>
             <toolset name="qcc-3.3.5*cpp"/>
             <note author="Jim Douglas" date="14 Feb 06" refid="27"/>
-        </mark-expected-failures>
-        <mark-expected-failures>
-            <test name="begin_end"/>
-            <toolset name="msvc-7.1"/>
-            <note author="Gunter Winkler" date="07 Oct 09" refid="48"/>
-        </mark-expected-failures>
+       </mark-expected-failures>
     </library>
 
     <!-- program_options -->
@@ -4076,44 +3935,6 @@ for more information.
 
     </library>
 
-    <library name="property_tree">
-        <mark-unusable>
-            <toolset name="borland-*"/>
-            <note author="Sebastian Redl">Inherited from MultiIndex</note>
-        </mark-unusable>
-        <mark-unusable>
-            <toolset name="sun-5.*"/>
-            <note author="Sebastian Redl">
-                Lots of test failures complaining about the ambiguity of a
-                const and a non-const overload of the same function.
-            </note>
-        </mark-unusable>
-        <mark-unusable>
-            <toolset name="vacpp"/>
-            <note author="Sebastian Redl">
-                This compiler seems to have very broken name lookup.
-            </note>
-        </mark-unusable>
-        <mark-expected-failures>
-            <test name="test_property_tree"/>
-            <test name="test_json_parser"/>
-            <toolset name="intel-darwin-*"/>
-            <toolset name="intel-linux-*"/>
-            <note author="Sebastian Redl">
-                Tend to crash the compiler (Intel 10) or simply take too long
-                (Intel 11).
-            </note>
-        </mark-expected-failures>
-        <mark-expected-failures>
-            <test name="test_xml_parser_rapidxml"/>
-            <toolset name="gcc-3.4.3"/>
-            <note author="Sebastian Redl">
-                This ancient GCC doesn't like local const ints as template
-                parameters. Or something like that.
-            </note>
-        </mark-expected-failures>
-    </library>
-
      <!-- pointer container -->
     <library name="ptr_container">
         <mark-unusable>
@@ -4233,8 +4054,8 @@ for more information.
             <toolset name="pathscale-3.1"/>
             <toolset name="sun-5.*"/>
             <note author="Thorsten Ottosen">
-                For codewarrior, the cause of this problem is unknown. Please
-                submit a patch. Other failures are due to problems with
+                For codewarrior, the cause of this problem is unknown. Please 
+                submit a patch. Other failures are due to problems with 
                 the serialization library, or to a minor problem with the use of
                 the library.
             </note>
@@ -4422,33 +4243,11 @@ for more information.
                 </note>
             </mark-failure>
         </test>
-        <mark-expected-failures>
-            <test name="test_ecuyer1988"/>
-            <test name="test_hellekalek1995"/>
-            <test name="test_rand48"/>
-            <test name="test_minstd_rand0"/>
-            <test name="test_minstd_rand"/>
-            <test name="test_kreutzer1986"/>
-            <test name="test_mt11213b"/>
-            <test name="test_mt19937"/>
-            <test name="test_lagged_fibonacci"/>
-            <test name="test_lagged_fibonacci607"/>
-            <test name="test_ranlux3"/>
-            <test name="test_ranlux4"/>
-            <test name="test_ranlux3_01"/>
-            <test name="test_ranlux4_01"/>
-            <test name="test_ranlux64_3_01"/>
-            <test name="test_ranlux64_4_01"/>
-            <test name="test_taus88"/>
-            <toolset name="gcc-mingw-4.3.3"/>
-            <note refid="5" author="Steven Watanabe"/>
-        </mark-expected-failures>
     </library>
 
     <!-- range -->
     <library name="range">
         <mark-unusable>
-            <toolset name="borland-*"/>
             <toolset name="mipspro"/>
             <toolset name="dmc-8_43-stlport-4_5_3"/>
             <toolset name="gcc-2.95.3*"/>
@@ -4464,15 +4263,6 @@ for more information.
             <note refid="27" author="Thorsten Ottosen"/>
         </mark-expected-failures>
         <mark-expected-failures>
-            <test name="adl_conformance"/>
-            <toolset name="msvc-7.1"/>
-            <note author="Neil Groves">
-                This test is designed to give users visibility of the ADL problems with their compilers.
-                Lack of Argument Dependent Lookup changes how one can extend the library. The lack of
-                ADL is worked-around internally so that most of the functionality is preserved.
-            </note>
-        </mark-expected-failures>
-        <mark-expected-failures>
             <test name="iterator_range"/>
             <toolset name="msvc-stlport"/>
             <toolset name="msvc-6.5_stlport4"/>
@@ -4484,14 +4274,6 @@ for more information.
                 fixes the problem.
 
                 For other compilers it is simply a bug in the standard library.
-            </note>
-        </mark-expected-failures>
-        <mark-expected-failures>
-            <test name="push_front"/>
-            <toolset name="msvc-9.0~stlport5.2"/>
-            <note author="Neil Groves">
-                push_front fails the unit test in this configuration. I do not have this
-                configuration available to determine if a work-around is possible.
             </note>
         </mark-expected-failures>
         <mark-expected-failures>
@@ -4551,29 +4333,6 @@ for more information.
         </mark-expected-failures>
     </library>
 
-    <!-- ratio -->
-    <library name="ratio">
-      <mark-unusable>
-        <toolset name="borland-*"/>
-        <toolset name="pathscale*"/>
-        <note author="Vicente J. Botet Escriba">
-            The compiler does not support features that are essential for the library.
-        </note>
-      </mark-unusable>
-        <mark-expected-failures>
-            <test name="mpl_plus_pass"/>
-            <test name="ratio_ext_pass"/>
-            <toolset name="intel-*-10.1"/>
-            <toolset name="intel-*-11.0"/>
-            <toolset name="intel-*-11.1"/>
-            <note author="Vicente J. Botet Escriba">
-                internal error: assertion failed: copy_template_param_expr.
-                It seems to be already an Intel internal bug database (tracker number #82149).
-                I have no workaround yet.
-            </note>
-        </mark-expected-failures>
-    </library>
-
     <!-- regex -->
     <library name="regex">
         <test name="regex_token_iterator_eg_2">
@@ -4627,7 +4386,7 @@ for more information.
           <toolset name="darwin*"/>
           <note author="J. Maddock">
              This tests fails because a dependency (Boost.Test)
-             fails to initialise correctly.  The issue has been
+             fails to initialise correctly.  The issue has been 
              reported to the library's author.
           </note>
        </mark-expected-failures>
@@ -4756,14 +4515,14 @@ for more information.
         </mark-expected-failures>
         <mark-expected-failures>
             <test name="native_tu_test"/>
-            <toolset name="msvc-7.1*"/>
-            <toolset name="msvc-8.0*"/>
+            <toolset name="msvc-7.1"/>
+            <toolset name="msvc-8.0"/>
             <note author="Alexander Nasonov" refid="2"/>
         </mark-expected-failures>
         <mark-expected-failures>
             <test name="emulation_tu_test"/>
-            <toolset name="msvc-7.1*"/>
-            <toolset name="msvc-8.0*"/>
+            <toolset name="msvc-7.1"/>
+            <toolset name="msvc-8.0"/>
             <note author="Alexander Nasonov" refid="2"/>
         </mark-expected-failures>
     </library>
@@ -4792,37 +4551,113 @@ for more information.
     <!-- statechart -->
     <library name="statechart">
         <mark-unusable>
-            <toolset name="borland*"/>
+            <toolset name="borland-5*"/>
+            <toolset name="cw-8*"/>
+            <toolset name="dmc-8*"/>
+            <toolset name="gcc-2*"/>
+            <toolset name="hp_cxx-65*"/>
+            <toolset name="msvc-6.5*"/>
+            <toolset name="msvc-7.0*"/>
+            <toolset name="pgi-7*"/>
             <toolset name="sun-5*"/>
-            <toolset name="pgi-1*"/>
             <note author="Andreas Huber" refid="17"/>
         </mark-unusable>
+        <mark-unusable>
+            <toolset name="acc-pa_risc"/>
+            <note author="Andreas Huber">
+                Marked unusable because TransitionTest.cpp compiled but did
+                the wrong thing at runtime!
+            </note>
+        </mark-unusable>
+        <mark-expected-failures>
+            <test name="DllTestNative"/>
+            <toolset name="gcc-mingw-4.2*"/>
+            <note author="Andreas Huber">
+                A runtime failure of this test indicates that the RTTI
+                implementation of this platform is broken in conjunction
+                with dynamic linking.
+            </note>
+        </mark-expected-failures>
         <mark-expected-failures>
             <test name="DllTestNormal"/>
+            <toolset name="*cygwin*"/>
             <toolset name="*mingw*"/>
-            <toolset name="intel-darwin-10*"/>
-            <toolset name="intel-darwin-11*"/>
+            <toolset name="hp_cxx-71*"/>
+            <toolset name="cw-9*"/>
             <note author="Andreas Huber">
                 A runtime failure of this test indicates that this platform
                 <b>dynamically</b> links code in a manner such that under
                 certain circumstances more than one instance of a
                 header-defined static class member can exist at runtime. See
-                <a href="http://www.boost.org/libs/statechart/doc/faq.html#Dll">FAQ</a>
+                <a href="http://www.boost.org/libs/statechart/doc/faq.html#Dll">here</a>
+                for more information.
+            </note>
+        </mark-expected-failures>
+        <mark-expected-failures>
+            <test name="LibTestNormal"/>
+            <toolset name="hp_cxx-71*"/>
+            <note author="Andreas Huber">
+                A runtime failure of this test indicates that this platform
+                <b>statically</b> links code in a manner such that under
+                certain circumstances more than one instance of a
+                header-defined static class member can exist at runtime. See
+                <a href="http://www.boost.org/libs/statechart/doc/faq.html#Dll">here</a>
                 for more information.
             </note>
         </mark-expected-failures>
         <mark-expected-failures reason="?">
-            <test name="FifoSchedulerTest*"/>
-            <toolset name="darwin-4.4"/>
-            <toolset name="intel-darwin-10*"/>
+            <test name="CameraExample"/>
+            <test name="CustomReactionTest*"/>
+            <test name="PerformanceExample"/>
+            <toolset name="cw-9*"/>
+            <note author="Andreas Huber" refid="29"/>
+        </mark-expected-failures>
+        <mark-expected-failures reason="?">
+            <test name="CustomReactionTest*"/>
+            <toolset name="hp_cxx-71*"/>
             <note author="Andreas Huber" refid="29"/>
         </mark-expected-failures>
         <mark-expected-failures reason="?">
             <test name="TransitionTest*"/>
-            <toolset name="intel-darwin-10*"/>
+            <toolset name="cw-9*"/>
+            <toolset name="hp_cxx-71*"/>
+            <toolset name="intel-linux-9.1"/>
             <toolset name="intel-linux-10*"/>
-            <toolset name="gcc-4.3.4_0x"/>
-            <toolset name="pathscale-3.2"/>
+            <toolset name="intel-darwin-9.1"/>
+            <toolset name="intel-darwin-10*"/>
+            <toolset name="vacpp-8.0"/>
+            <note author="Andreas Huber" refid="29"/>
+        </mark-expected-failures>
+        <mark-expected-failures reason="?">
+            <test name="TransitionTestBoth"/>
+            <test name="TransitionTestNative"/>
+            <toolset name="pathscale-3.1"/>
+            <note author="Andreas Huber" refid="29"/>
+        </mark-expected-failures>
+        <mark-expected-failures reason="?">
+            <test name="InvalidTransitionTest1Relaxed"/>
+            <test name="StopWatchExample"/>
+            <toolset name="vacpp-8.0"/>
+            <note author="Andreas Huber" refid="29"/>
+        </mark-expected-failures>
+        <mark-expected-failures reason="?">
+            <test name="CustomReactionTest*"/>
+            <toolset name="acc*"/>
+            <note author="Andreas Huber" refid="29"/>
+        </mark-expected-failures>
+        <mark-expected-failures>
+            <test name="StopWatch*"/>
+            <toolset name="msvc-8.0~wm5~stlport5.1"/>
+            <note author="Andreas Huber">
+                This looks like a std library or configuration bug. Since
+                difftime is only used in the example, this failure can be
+                ignored.
+            </note>
+        </mark-expected-failures>
+        <mark-expected-failures reason="?">
+            <test name="DllTest*"/>
+            <toolset name="cygwin-gcc-stdcxx-4.2.1"/>
+            <toolset name="msvc-8.0~wm5~stlport5.1"/>
             <note author="Andreas Huber" refid="29"/>
         </mark-expected-failures>
     </library>
@@ -5058,16 +4893,6 @@ choosing instead to bind them to the private (and unimplemented) copy constructo
 With aC++, the tests compile cleanly in strict ansi mode and succeed.
             </note>
         </mark-expected-failures>
-        <mark-expected-failures>
-            <test name="test_thread_move_return"/>
-            <test name="test_thread_move_return_lib"/>
-            <test name="test_thread_return_local"/>
-            <test name="test_thread_return_local_lib"/>
-            <toolset name="*"/>
-            <note author="Anthony Williams" date="2009-10-28">
-These tests will fail in most compilers that don't support rvalue references.
-            </note>
-        </mark-expected-failures>
     </library>
 
     <!-- tuple -->
@@ -5079,16 +4904,6 @@ These tests will fail in most compilers that don't support rvalue references.
 
     <!-- type_traits -->
     <library name="type_traits">
-       <mark-expected-failures>
-          <test name="has_operator_new_test"/>
-          <test name="make_signed_test"/>
-          <test name="make_unsigned_test"/>
-          <toolset name="msvc-7.1"/>
-          <note author="John Maddock">
-             Apparently the compiler can't cope with these - later versions are fine though.
-             Probably work-round-able if someone would care to look into these.
-          </note>
-       </mark-expected-failures>
         <mark-expected-failures>
             <test name="function_traits_test"/>
             <test name="remove_bounds_test"/>
@@ -5149,9 +4964,9 @@ These tests will fail in most compilers that don't support rvalue references.
         </mark-expected-failures>
         <mark-expected-failures>
             <test name="promote_enum_msvc_bug_test"/>
-            <toolset name="msvc-7.1*"/>
-            <toolset name="msvc-8.0*"/>
-            <toolset name="msvc-9.0*"/>
+            <toolset name="msvc-7.1"/>
+            <toolset name="msvc-8.0"/>
+            <toolset name="msvc-9.0"/>
             <note author="Alexander Nasonov">
                 See bug 99776 'enum UIntEnum { value = UINT_MAX } is promoted to int'
                 http://lab.msdn.microsoft.com/ProductFeedback/viewfeedback.aspx?feedbackid=22b0a6b7-120f-4ca0-9136-fa1b25b26efe
@@ -5318,15 +5133,6 @@ These tests will fail in most compilers that don't support rvalue references.
                 work by someone who has this compiler.
             </note>
         </mark-unusable>
-       <mark-expected-failures>
-          <test name="test_type_traits"/>
-          <test name="std_test_type_traits"/>
-          <toolset name="msvc-7.1"/>
-          <note author="John Maddock">
-             Later versions of MSVC are required for these tests - the issues may
-             be work-round-able if anyone cares enough to look into them.
-          </note>
-       </mark-expected-failures>
         <mark-expected-failures>
             <test name="test_mem_fn_tricky"/>
             <test name="test_bind_tricky"/>
@@ -5901,26 +5707,32 @@ These tests will fail in most compilers that don't support rvalue references.
     <!-- unordered -->
     <library name="unordered">
       <mark-expected-failures>
-        <test name="unnecessary_copy_tests"/>
+        <test name="move_tests"/>
+        <toolset name="msvc-6*"/>
+        <toolset name="msvc-7*"/>
+        <toolset name="msvc-8*"/>
+        <toolset name="msvc-9.0"/>
+        <toolset name="msvc-9.0express"/>
+        <toolset name="msvc-10.0"/>
+        <toolset name="intel-win-10.1"/>
         <toolset name="borland-*"/>
         <toolset name="sun-*"/>
+        <toolset name="hp_css-*"/>
+        <toolset name="intel-linux-8*"/>
+        <toolset name="intel-linux-9.0*"/>
+        <toolset name="acc-pa_risc"/>
         <note author="Daniel James">
-            This tests whether inserting elements creates as few copies as I think
-            is possible. If this fails it just means that the container might be
-            a little inefficient.
-        </note>
-      </mark-expected-failures>
-
-      <mark-expected-failures>
-        <test name="compile_map"/>
-        <test name="compile_set"/>
-        <toolset name="gcc-open64"/>
-        <toolset name="pathscale-*"/>
-        <note author="Daniel James">
-            Concept checks don't seem to work on pathscale.
+            This tests whether the container is successfully moved under
+            different circumstances, and fails if it is copied. Typically if
+            this one fails, it just means that return value optimization was
+            not applied. It might be possible to change the test to make it for
+            the compiler to apply ADL (by not having non-const reference
+            parameters for the function which returns the container). So this
+            is an acceptable failure.
         </note>
       </mark-expected-failures>
     </library>
+
 
     <!-- utility/enable_if -->
     <library name="utility/enable_if">
@@ -5962,7 +5774,7 @@ These tests will fail in most compilers that don't support rvalue references.
             Related Boost mailing list discussion:
             http://lists.boost.org/Archives/boost/2008/11/144465.php
             CodeGear bug reports on this issue:
-            http://qc.codegear.com/wc/qcmain.aspx?d=68959
+            http://qc.codegear.com/wc/qcmain.aspx?d=68959  
             http://qc.codegear.com/wc/qcmain.aspx?d=69196
           </note>
         </mark-expected-failures>
@@ -5974,7 +5786,7 @@ These tests will fail in most compilers that don't support rvalue references.
             Borland 5.9.3 has an error (E2285) when trying to pass a
             multi-dimensional array by reference to a function template.
             A bug report by Christopher Yeleighton appears related:
-            "The compiler obligatorily converts member arrays to pointers"
+            "The compiler obligatorily converts member arrays to pointers" 
             http://qc.codegear.com/wc/qcmain.aspx?d=10267
           </note>
         </mark-expected-failures>
@@ -6016,17 +5828,6 @@ These tests will fail in most compilers that don't support rvalue references.
                 <note refid="3" author="D. Gregor"/>
             </mark-failure>
         </test>
-        <test name="value_init_test">
-          <mark-failure>
-            <toolset name="intel-9.0*"/>
-            <toolset name="intel-linux-9.0*"/>
-            <note author="Niels Dekker" date="2009-07-01">
-            When I made the conversion from value_initialized&lt;T&gt; to T&amp;
-            const-correct, this specific compiler version gave compile errors.
-            See also: Ticket #2548 - "Let's fix the logical constness of value_initialized!"
-            </note>
-          </mark-failure>
-        </test>
         <mark-expected-failures>
             <test name="value_init_test"/>
             <toolset name="msvc-6.5*"/>
@@ -6051,55 +5852,6 @@ These tests will fail in most compilers that don't support rvalue references.
         </mark-expected-failures>
     </library>
 
-    <!-- uuid -->
-    <library name="uuid">
-        <mark-expected-failures>
-            <test name="test_serialization"/>
-            <toolset name="cuda-2.2"/>
-            <toolset name="borland-cb2009"/>
-            <toolset name="borland-cb2010"/>
-            <toolset name="borland-5.9.3"/>
-            <toolset name="borland-6.1.3"/>
-            <toolset name="borland-6.2.1"/>
-            <note author="Andy Tompkins">
-                The test relies on Boost.Serialization which is not
-                supported on this toolset.
-            </note>
-        </mark-expected-failures>
-        <mark-expected-failures>
-            <test name="test_random_generator"/>
-            <test name="test_tagging"/>
-            <test name="test_uuid_class"/>
-            <toolset name="borland-cb2009"/>
-            <toolset name="borland-cb2010"/>
-            <toolset name="borland-5.9.3"/>
-            <toolset name="borland-6.1.3"/>
-            <toolset name="borland-6.2.1"/>
-            <note author="Andy Tompkins">
-                The test relies on Boost.Random which is not supported
-                on this toolset.
-            </note>
-        </mark-expected-failures>
-        <mark-expected-failures>
-            <test name="test_uuid"/>
-            <toolset name="borland-cb2009"/>
-            <toolset name="borland-cb2010"/>
-            <toolset name="borland-5.9.3"/>
-            <toolset name="borland-6.1.3"/>
-            <toolset name="borland-6.2.1"/>
-            <note author="Andy Tompkins" refid="28"/>
-        </mark-expected-failures>
-        <mark-expected-failures>
-            <test name="compile_random_generator"/>
-            <test name="compile_uuid_generators"/>
-            <test name="test_include1"/>
-            <toolset name="borland-6.2.1"/>
-            <note author="Andy Tompkins">
-                 The test relies on Boost.Iterator (iterator_facade)
-                 which is not supported on this toolset.
-           </note>
-        </mark-expected-failures>
-    </library>
 
     <!-- variant -->
     <library name="variant">
@@ -6228,9 +5980,9 @@ These tests will fail in most compilers that don't support rvalue references.
             </note>
         </mark-unusable>
         <mark-unusable>
-            <toolset name="borland-*"/>
+            <toolset name="borland-5*"/>
             <note author="Eric Niebler">
-                Boost.Proto doesn't work on this compiler.
+                Boost.Fusion doesn't work on this compiler.
             </note>
         </mark-unusable>
         <mark-unusable>
@@ -6251,7 +6003,6 @@ These tests will fail in most compilers that don't support rvalue references.
             <toolset name="sun-5.7"/>
             <toolset name="sun-5.8"/>
             <toolset name="sun-5.9"/>
-            <toolset name="sun-5.10"/>
             <note refid="17"/>
         </mark-unusable>
 
@@ -6507,13 +6258,4 @@ These tests will fail in most compilers that don't support rvalue references.
         The test passes when the timeout value is increased.
     </note>
 
-    <note id="48">
-        This test fails when BOOST_UBLAS_NO_NESTED_CLASS_RELATION is defined.
-    </note>
-
-    <note id="49">
-        This test fails because MinGW apparently does not always catch exceptions properly.
-    </note>
-
 </explicit-failures-markup>
-

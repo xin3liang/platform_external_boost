@@ -9,8 +9,6 @@
 #define BOOST_FUSION_AT_KEY_20060304_1755
 
 #include <boost/type_traits/is_const.hpp>
-#include <boost/fusion/algorithm/query/find.hpp>
-#include <boost/fusion/iterator/deref_data.hpp>
 #include <boost/fusion/support/tag_of.hpp>
 #include <boost/fusion/support/detail/access.hpp>
 
@@ -18,7 +16,7 @@ namespace boost { namespace fusion
 {
     // Special tags:
     struct sequence_facade_tag;
-    struct boost_array_tag; // boost::array tag
+    struct array_tag; // boost::array tag
     struct mpl_sequence_tag; // mpl sequence tag
     struct std_pair_tag; // std::pair tag
 
@@ -27,32 +25,19 @@ namespace boost { namespace fusion
         template <typename Tag>
         struct at_key_impl
         {
-            template <typename Seq, typename Key>
-            struct apply
-            {
-                typedef typename
-                    result_of::deref_data<
-                        typename result_of::find<Seq, Key>::type
-                    >::type
-                type;
-
-                static type
-                call(Seq& seq)
-                {
-                    return fusion::deref_data(fusion::find<Key>(seq));
-                }
-            };
+            template <typename Sequence, typename Key>
+            struct apply;
         };
 
         template <>
         struct at_key_impl<sequence_facade_tag>
         {
             template <typename Sequence, typename Key>
-            struct apply : Sequence::template at_key_impl<Sequence, Key> {};
+            struct apply : Sequence::template at_key<Sequence, Key> {};
         };
 
         template <>
-        struct at_key_impl<boost_array_tag>;
+        struct at_key_impl<array_tag>;
 
         template <>
         struct at_key_impl<mpl_sequence_tag>;

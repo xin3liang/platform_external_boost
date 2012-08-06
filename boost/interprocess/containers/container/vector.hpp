@@ -1,12 +1,40 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2005-2009. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2008. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 // See http://www.boost.org/libs/container for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
+//
+// This file comes from SGI's stl_vector.h file. Modified by Ion Gaztanaga.
+// Renaming, isolating and porting to generic algorithms. Pointer typedef 
+// set to allocator::pointer to allow placing it in shared memory.
+//
+///////////////////////////////////////////////////////////////////////////////
+// Copyright (c) 1994
+// Hewlett-Packard Company
+// 
+// Permission to use, copy, modify, distribute and sell this software
+// and its documentation for any purpose is hereby granted without fee,
+// provided that the above copyright notice appear in all copies and
+// that both that copyright notice and this permission notice appear
+// in supporting documentation.  Hewlett-Packard Company makes no
+// representations about the suitability of this software for any
+// purpose.  It is provided "as is" without express or implied warranty.
+// 
+// 
+// Copyright (c) 1996
+// Silicon Graphics Computer Systems, Inc.
+// 
+// Permission to use, copy, modify, distribute and sell this software
+// and its documentation for any purpose is hereby granted without fee,
+// provided that the above copyright notice appear in all copies and
+// that both that copyright notice and this permission notice appear
+// in supporting documentation.  Silicon Graphics makes no
+// representations about the suitability of this software for any
+// purpose.  It is provided "as is" without express or implied warranty.
 
 #ifndef BOOST_CONTAINERS_CONTAINERS_VECTOR_HPP
 #define BOOST_CONTAINERS_CONTAINERS_VECTOR_HPP
@@ -15,9 +43,8 @@
 #  pragma once
 #endif
 
-#include "detail/config_begin.hpp"
-#include INCLUDE_BOOST_CONTAINER_DETAIL_WORKAROUND_HPP
-#include INCLUDE_BOOST_CONTAINER_CONTAINER_FWD_HPP
+#include <boost/interprocess/containers/container/detail/config_begin.hpp>
+#include <boost/interprocess/containers/container/detail/workaround.hpp>
 
 #include <cstddef>
 #include <memory>
@@ -31,20 +58,25 @@
 #include <boost/type_traits/has_trivial_assign.hpp>
 #include <boost/type_traits/has_nothrow_copy.hpp>
 #include <boost/type_traits/has_nothrow_assign.hpp>
-#include INCLUDE_BOOST_CONTAINER_DETAIL_VERSION_TYPE_HPP
-#include INCLUDE_BOOST_CONTAINER_DETAIL_ALLOCATION_TYPE_HPP
-#include INCLUDE_BOOST_CONTAINER_DETAIL_UTILITIES_HPP
-#include INCLUDE_BOOST_CONTAINER_DETAIL_ITERATORS_HPP
-#include INCLUDE_BOOST_CONTAINER_DETAIL_ALGORITHMS_HPP
-#include INCLUDE_BOOST_CONTAINER_DETAIL_DESTROYERS_HPP
-#include INCLUDE_BOOST_CONTAINER_CONTAINER_FWD_HPP
-#include INCLUDE_BOOST_CONTAINER_MOVE_HPP
+#include <boost/interprocess/containers/container/detail/version_type.hpp>
+#include <boost/interprocess/containers/container/detail/allocation_type.hpp>
+#include <boost/interprocess/containers/container/detail/utilities.hpp>
+#include <boost/interprocess/containers/container/detail/iterators.hpp>
+#include <boost/interprocess/containers/container/detail/algorithms.hpp>
+#include <boost/interprocess/containers/container/detail/destroyers.hpp>
+#include <boost/interprocess/containers/container/containers_fwd.hpp>
+#include <boost/interprocess/detail/move.hpp>
 #include <boost/pointer_to_other.hpp>
-#include INCLUDE_BOOST_CONTAINER_DETAIL_MPL_HPP
-#include INCLUDE_BOOST_CONTAINER_DETAIL_ADVANCED_INSERT_INT_HPP
+#include <boost/interprocess/containers/container/detail/mpl.hpp>
+#include <boost/interprocess/containers/container/detail/advanced_insert_int.hpp>
 
+#ifdef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 namespace boost {
-namespace container {
+namespace interprocess {
+#else
+namespace boost {
+namespace interprocess_container {
+#endif
 
 /// @cond
 
@@ -63,10 +95,10 @@ class vector_const_iterator
                           ,const typename std::iterator_traits<Pointer>::value_type &>
 {
    public:
-   typedef typename std::iterator_traits<Pointer>::value_type  value_type;
+   typedef const typename std::iterator_traits<Pointer>::value_type  value_type;
    typedef typename std::iterator_traits<Pointer>::difference_type   difference_type;
    typedef typename boost::pointer_to_other<Pointer, value_type>::type      pointer;
-   typedef const value_type&                                               reference;
+   typedef value_type&                                               reference;
 
    /// @cond
    protected:
@@ -213,8 +245,8 @@ struct vector_value_traits
    typedef T value_type;
    typedef A allocator_type;
    static const bool trivial_dctr = boost::has_trivial_destructor<value_type>::value;
-   static const bool trivial_dctr_after_move = false;
-      //::boost::has_trivial_destructor_after_move<value_type>::value || trivial_dctr;
+   static const bool trivial_dctr_after_move = 
+      boost::interprocess::has_trivial_destructor_after_move<value_type>::value || trivial_dctr;
    static const bool trivial_copy = has_trivial_copy<value_type>::value;
    static const bool nothrow_copy = has_nothrow_copy<value_type>::value;
    static const bool trivial_assign = has_trivial_assign<value_type>::value;
@@ -256,6 +288,11 @@ struct vector_alloc_holder
       : members_(a)
    {}
 
+   //Constructor, does not throw
+   vector_alloc_holder(const vector_alloc_holder<A> &h)
+      : members_(h.alloc())
+   {}
+
    //Destructor
    ~vector_alloc_holder()
    {
@@ -266,7 +303,7 @@ struct vector_alloc_holder
    typedef containers_detail::integral_constant<unsigned, 1>      allocator_v1;
    typedef containers_detail::integral_constant<unsigned, 2>      allocator_v2;
    typedef containers_detail::integral_constant<unsigned,
-      boost::container::containers_detail::version<A>::value> alloc_version;
+      boost::interprocess_container::containers_detail::version<A>::value> alloc_version;
    std::pair<pointer, bool>
       allocation_command(allocation_type command,
                          size_type limit_size, 
@@ -288,7 +325,7 @@ struct vector_alloc_holder
       (void)limit_size;
       (void)reuse;
       if(!(command & allocate_new))
-         return std::pair<pointer, bool>(pointer(0), false);
+         return std::pair<pointer, bool>(pointer(0), 0);
       received_size = preferred_size;
       return std::make_pair(this->alloc().allocate(received_size), false);
    }
@@ -324,12 +361,6 @@ struct vector_alloc_holder
       size_type   m_capacity;
    } members_;
 
-   A &alloc()
-   {  return members_;  }
-
-   const A &alloc() const
-   {  return members_;  }
-
    protected:
    void prot_deallocate()
    {
@@ -357,17 +388,23 @@ struct vector_alloc_holder
       this->destroy_n(containers_detail::get_pointer(this->members_.m_start), this->members_.m_size);
       this->members_.m_size = 0;
    }
+
+   A &alloc()
+   {  return members_;  }
+
+   const A &alloc() const
+   {  return members_;  }
 };
 
 }  //namespace containers_detail {
 /// @endcond
 
-//! \class vector
+//! \class ::boost::interprocess::vector boost/interprocess/containers/container/vector.hpp <boost/interprocess/containers/vector.hpp>
 //! A vector is a sequence that supports random access to elements, constant 
 //! time insertion and removal of elements at the end, and linear time insertion 
 //! and removal of elements at the beginning or in the middle. The number of 
 //! elements in a vector may vary dynamically; memory management is automatic.
-//! boost::container::vector is similar to std::vector but it's compatible
+//! boost::interprocess_container::vector is similar to std::vector but it's compatible
 //! with shared memory and memory mapped files.
 template <class T, class A>
 class vector : private containers_detail::vector_alloc_holder<A>
@@ -375,8 +412,6 @@ class vector : private containers_detail::vector_alloc_holder<A>
    /// @cond
    typedef vector<T, A>                   self_t;
    typedef containers_detail::vector_alloc_holder<A> base_t;
-   typedef typename containers_detail::
-      move_const_ref_type<T>::type insert_const_ref_type;
    /// @endcond
    public:
    //! The type of object, T, stored in the vector
@@ -411,7 +446,6 @@ class vector : private containers_detail::vector_alloc_holder<A>
 
    /// @cond
    private:
-   BOOST_MOVE_MACRO_COPYABLE_AND_MOVABLE(vector)
    typedef containers_detail::advanced_insert_aux_int<T, T*>    advanced_insert_aux_int_t;
    typedef containers_detail::vector_value_traits<value_type, A> value_traits;
 
@@ -421,10 +455,11 @@ class vector : private containers_detail::vector_alloc_holder<A>
 
    typedef constant_iterator<T, difference_type>   cvalue_iterator;
    typedef repeat_iterator<T, difference_type>     repeat_it;
-   typedef BOOST_CONTAINER_MOVE_NAMESPACE::move_iterator<repeat_it>         repeat_move_it;
+   typedef boost::interprocess::move_iterator<repeat_it>         repeat_move_it;
    /// @endcond
 
    public:
+   BOOST_INTERPROCESS_ENABLE_MOVE_EMULATION(vector)
 
    //! <b>Effects</b>: Constructs a vector taking the allocator as parameter.
    //! 
@@ -463,7 +498,7 @@ class vector : private containers_detail::vector_alloc_holder<A>
    //! 
    //! <b>Complexity</b>: Linear to the elements x contains.
    vector(const vector<T, A>& x) 
-      :  base_t(static_cast<const base_t&>(x).alloc())
+      :  base_t((base_t&)x)
    {  *this = x;  }
 
    //! <b>Effects</b>: Move constructor. Moves mx's resources to *this.
@@ -471,8 +506,8 @@ class vector : private containers_detail::vector_alloc_holder<A>
    //! <b>Throws</b>: If allocator_type's copy constructor throws.
    //! 
    //! <b>Complexity</b>: Constant.
-   vector(BOOST_MOVE_MACRO_RV_REF(vector) mx) 
-      :  base_t(static_cast<base_t&>(mx).alloc())
+   vector(BOOST_INTERPROCESS_RV_REF(vector) mx) 
+      :  base_t(boost::interprocess::move(mx))
    {  this->swap(mx);   }
 
    //! <b>Effects</b>: Constructs a vector that will use a copy of allocator a
@@ -780,8 +815,8 @@ class vector : private containers_detail::vector_alloc_holder<A>
          else{
             //We will reuse insert code, so create a dummy input iterator
             T *dummy_it(containers_detail::get_pointer(this->members_.m_start));
-            containers_detail::advanced_insert_aux_proxy<T, BOOST_CONTAINER_MOVE_NAMESPACE::move_iterator<T*>, T*>
-               proxy(::BOOST_CONTAINER_MOVE_NAMESPACE::make_move_iterator(dummy_it), ::BOOST_CONTAINER_MOVE_NAMESPACE::make_move_iterator(dummy_it));
+            containers_detail::advanced_insert_aux_proxy<T, boost::interprocess::move_iterator<T*>, T*>
+               proxy(boost::interprocess::make_move_iterator(dummy_it), boost::interprocess::make_move_iterator(dummy_it));
             //Backwards (and possibly forward) expansion
             if(ret.second){
                #ifdef BOOST_CONTAINERS_VECTOR_ALLOC_STATS
@@ -818,7 +853,7 @@ class vector : private containers_detail::vector_alloc_holder<A>
    //! <b>Throws</b>: If memory allocation throws or T's copy constructor throws.
    //!
    //! <b>Complexity</b>: Linear to the number of elements in x.
-   vector& operator=(BOOST_MOVE_MACRO_COPY_ASSIGN_REF(vector) x)
+   vector& operator=(const vector& x)
    {
       if (&x != this){
          this->assign(x.members_.m_start, x.members_.m_start + x.members_.m_size);
@@ -833,8 +868,8 @@ class vector : private containers_detail::vector_alloc_holder<A>
    //!
    //! <b>Throws</b>: If allocator_type's copy constructor throws.
    //!
-   //! <b>Complexity</b>: Linear.
-   vector& operator=(BOOST_MOVE_MACRO_RV_REF(vector) x)
+   //! <b>Complexity</b>: Constant.
+   vector& operator=(BOOST_INTERPROCESS_RV_REF(vector) x)
    {
       if (&x != this){
          this->swap(x);
@@ -872,19 +907,17 @@ class vector : private containers_detail::vector_alloc_holder<A>
    //!   T's copy constructor throws.
    //!
    //! <b>Complexity</b>: Amortized constant time.
-   void push_back(insert_const_ref_type x) 
-   {  return priv_push_back(x);  }
-
-   #if defined(BOOST_NO_RVALUE_REFERENCES) && !defined(BOOST_MOVE_DOXYGEN_INVOKED)
-   void push_back(T &x) { push_back(const_cast<const T &>(x)); }
-
-   template<class U>
-   void push_back(const U &u, typename containers_detail::enable_if_c
-                  <containers_detail::is_same<T, U>::value &&
-                   !::BOOST_CONTAINER_MOVE_NAMESPACE::is_movable<U>::value
-                  >::type* =0)
-   { return priv_push_back(u); }
-   #endif
+   void push_back(const T& x) 
+   {
+      if (this->members_.m_size < this->members_.m_capacity){
+         //There is more memory, just construct a new object at the end
+         new((void*)(containers_detail::get_pointer(this->members_.m_start) + this->members_.m_size))value_type(x);
+         ++this->members_.m_size;
+      }
+      else{
+         this->insert(this->cend(), x);
+      }
+   }
 
    //! <b>Effects</b>: Constructs a new element in the end of the vector
    //!   and moves the resources of mx to this new element.
@@ -892,19 +925,19 @@ class vector : private containers_detail::vector_alloc_holder<A>
    //! <b>Throws</b>: If memory allocation throws.
    //!
    //! <b>Complexity</b>: Amortized constant time.
-   void push_back(BOOST_MOVE_MACRO_RV_REF(T) x) 
+   void push_back(BOOST_INTERPROCESS_RV_REF(T) x) 
    {
       if (this->members_.m_size < this->members_.m_capacity){
          //There is more memory, just construct a new object at the end
-         new((void*)containers_detail::get_pointer(this->members_.m_start + this->members_.m_size))value_type(BOOST_CONTAINER_MOVE_NAMESPACE::move(x));
+         new((void*)containers_detail::get_pointer(this->members_.m_start + this->members_.m_size))value_type(boost::interprocess::move(x));
          ++this->members_.m_size;
       }
       else{
-         this->insert(this->cend(), BOOST_CONTAINER_MOVE_NAMESPACE::move(x));
+         this->insert(this->cend(), boost::interprocess::move(x));
       }
    }
 
-   #if defined(BOOST_CONTAINERS_PERFECT_FORWARDING) || defined(BOOST_CONTAINER_DOXYGEN_INVOKED)
+   #if defined(BOOST_CONTAINERS_PERFECT_FORWARDING) || defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
 
    //! <b>Effects</b>: Inserts an object of type T constructed with
    //!   std::forward<Args>(args)... in the end of the vector.
@@ -918,12 +951,12 @@ class vector : private containers_detail::vector_alloc_holder<A>
       T* back_pos = containers_detail::get_pointer(this->members_.m_start) + this->members_.m_size;
       if (this->members_.m_size < this->members_.m_capacity){
          //There is more memory, just construct a new object at the end
-         new((void*)(back_pos))value_type(BOOST_CONTAINER_MOVE_NAMESPACE::forward<Args>(args)...);
+         new((void*)(back_pos))value_type(boost::interprocess::forward<Args>(args)...);
          ++this->members_.m_size;
       }
       else{
-         typedef containers_detail::advanced_insert_aux_emplace<T, T*, Args...> type;
-         type &&proxy = type(BOOST_CONTAINER_MOVE_NAMESPACE::forward<Args>(args)...);
+         containers_detail::advanced_insert_aux_emplace<T, T*, Args...> proxy
+            (boost::interprocess::forward<Args>(args)...);
          priv_range_insert(back_pos, 1, proxy);
       }
    }
@@ -942,8 +975,8 @@ class vector : private containers_detail::vector_alloc_holder<A>
    {
       //Just call more general insert(pos, size, value) and return iterator
       size_type pos_n = position - cbegin();
-      typedef containers_detail::advanced_insert_aux_emplace<T, T*, Args...> type;
-      type &&proxy = type(BOOST_CONTAINER_MOVE_NAMESPACE::forward<Args>(args)...);
+      containers_detail::advanced_insert_aux_emplace<T, T*, Args...> proxy
+         (boost::interprocess::forward<Args>(args)...);
       priv_range_insert(position.get_ptr(), 1, proxy);
       return iterator(this->members_.m_start + pos_n);
    }
@@ -1034,16 +1067,13 @@ class vector : private containers_detail::vector_alloc_holder<A>
    //!
    //! <b>Complexity</b>: If position is end(), amortized constant time
    //!   Linear time otherwise.
-   iterator insert(const_iterator position, insert_const_ref_type x) 
-   {  return this->priv_insert(position, x); }
-
-   #if defined(BOOST_NO_RVALUE_REFERENCES) && !defined(BOOST_MOVE_DOXYGEN_INVOKED)
-   iterator insert(const_iterator position, T &x) { return this->insert(position, const_cast<const T &>(x)); }
-
-   template<class U>
-   iterator insert(const_iterator position, const U &u, typename containers_detail::enable_if_c<containers_detail::is_same<T, U>::value && !::BOOST_CONTAINER_MOVE_NAMESPACE::is_movable<U>::value >::type* =0)
-   {  return this->priv_insert(position, u); }
-   #endif
+   iterator insert(const_iterator position, const T& x) 
+   {
+      //Just call more general insert(pos, size, value) and return iterator
+      size_type pos_n = position - cbegin();
+      this->insert(position, (size_type)1, x);
+      return iterator(this->members_.m_start + pos_n);
+   }
 
    //! <b>Requires</b>: position must be a valid iterator of *this.
    //!
@@ -1053,7 +1083,7 @@ class vector : private containers_detail::vector_alloc_holder<A>
    //!
    //! <b>Complexity</b>: If position is end(), amortized constant time
    //!   Linear time otherwise.
-   iterator insert(const_iterator position, BOOST_MOVE_MACRO_RV_REF(T) x) 
+   iterator insert(const_iterator position, BOOST_INTERPROCESS_RV_REF(T) x) 
    {
       //Just call more general insert(pos, size, value) and return iterator
       size_type pos_n = position - cbegin();
@@ -1112,7 +1142,7 @@ class vector : private containers_detail::vector_alloc_holder<A>
    {
       T *pos = containers_detail::get_pointer(position.get_ptr());
       T *beg = containers_detail::get_pointer(this->members_.m_start);
-      BOOST_CONTAINER_MOVE_NAMESPACE::move(pos + 1, beg + this->members_.m_size, pos);
+      boost::interprocess::move(pos + 1, beg + this->members_.m_size, pos);
       --this->members_.m_size;
       //Destroy last element
       base_t::destroy(containers_detail::get_pointer(this->members_.m_start) + this->members_.m_size);
@@ -1128,7 +1158,7 @@ class vector : private containers_detail::vector_alloc_holder<A>
    {
       if (first != last){   // worth doing, copy down over hole
          T* end_pos = containers_detail::get_pointer(this->members_.m_start) + this->members_.m_size;
-         T* ptr = containers_detail::get_pointer(BOOST_CONTAINER_MOVE_NAMESPACE::move
+         T* ptr = containers_detail::get_pointer(boost::interprocess::move
             (containers_detail::get_pointer(last.get_ptr())
             ,end_pos
             ,containers_detail::get_pointer(first.get_ptr())
@@ -1187,6 +1217,8 @@ class vector : private containers_detail::vector_alloc_holder<A>
    void clear() 
    {  this->prot_destroy_all();  }
 
+   /// @cond
+
    //! <b>Effects</b>: Tries to deallocate the excess of memory created
    //!   with previous allocations. The size of the vector is unchanged
    //!
@@ -1196,29 +1228,7 @@ class vector : private containers_detail::vector_alloc_holder<A>
    void shrink_to_fit()
    {  priv_shrink_to_fit(alloc_version());   }
 
-   /// @cond
-
    private:
-   iterator priv_insert(const_iterator position, const T &x) 
-   {
-      //Just call more general insert(pos, size, value) and return iterator
-      size_type pos_n = position - cbegin();
-      this->insert(position, (size_type)1, x);
-      return iterator(this->members_.m_start + pos_n);
-   }
-
-   void priv_push_back(const T &x) 
-   {
-      if (this->members_.m_size < this->members_.m_capacity){
-         //There is more memory, just construct a new object at the end
-         new((void*)(containers_detail::get_pointer(this->members_.m_start) + this->members_.m_size))value_type(x);
-         ++this->members_.m_size;
-      }
-      else{
-         this->insert(this->cend(), x);
-      }
-   }
-
    void priv_shrink_to_fit(allocator_v1)
    {
       if(this->members_.m_capacity){
@@ -1335,10 +1345,10 @@ class vector : private containers_detail::vector_alloc_holder<A>
       if (elems_after > n){
          //New elements can be just copied.
          //Move to uninitialized memory last objects
-         ::BOOST_CONTAINER_MOVE_NAMESPACE::uninitialized_move(old_finish - n, old_finish, old_finish);
+         boost::interprocess::uninitialized_move(old_finish - n, old_finish, old_finish);
          this->members_.m_size += n;
          //Copy previous to last objects to the initialized end
-         BOOST_CONTAINER_MOVE_NAMESPACE::move_backward(pos, old_finish - n, old_finish);
+         boost::interprocess::move_backward(pos, old_finish - n, old_finish);
          //Insert new objects in the pos
          interf.copy_all_to(pos);
       }
@@ -1348,7 +1358,7 @@ class vector : private containers_detail::vector_alloc_holder<A>
          interf.uninitialized_copy_some_and_update(old_finish, elems_after, false);
          this->members_.m_size += n - elems_after;
          //Copy old [pos, end()) elements to the uninitialized memory
-         ::BOOST_CONTAINER_MOVE_NAMESPACE::uninitialized_move
+         boost::interprocess::uninitialized_move
             ( pos, old_finish, containers_detail::get_pointer(this->members_.m_start) + this->members_.m_size);
          this->members_.m_size += elems_after;
          //Copy first new elements in pos
@@ -1370,7 +1380,7 @@ class vector : private containers_detail::vector_alloc_holder<A>
       //the start of the new buffer
       T *old_buffer = containers_detail::get_pointer(this->members_.m_start);
       if(old_buffer){
-         new_finish = ::BOOST_CONTAINER_MOVE_NAMESPACE::uninitialized_move
+         new_finish = boost::interprocess::uninitialized_move
             (containers_detail::get_pointer(this->members_.m_start), pos, old_finish = new_finish);
          constructed_values_destroyer.increment_size(new_finish - old_finish);
       }
@@ -1381,7 +1391,7 @@ class vector : private containers_detail::vector_alloc_holder<A>
       //Initialize from the rest of the old buffer, 
       //starting from previous point
       if(old_buffer){
-         new_finish = ::BOOST_CONTAINER_MOVE_NAMESPACE::uninitialized_move
+         new_finish = boost::interprocess::uninitialized_move
             (pos, old_buffer + this->members_.m_size, new_finish);
          //Destroy and deallocate old elements
          //If there is allocated memory, destroy and deallocate
@@ -1422,7 +1432,7 @@ class vector : private containers_detail::vector_alloc_holder<A>
       //Check if s_before is big enough to hold the beginning of old data + new data
       if(difference_type(s_before) >= difference_type(elemsbefore + n)){
          //Copy first old values before pos, after that the new objects
-         ::BOOST_CONTAINER_MOVE_NAMESPACE::uninitialized_move(old_start, pos, new_start);
+         boost::interprocess::uninitialized_move(old_start, pos, new_start);
          this->members_.m_size = elemsbefore;
          interf.uninitialized_copy_all_to(new_start + elemsbefore);
          this->members_.m_size += n;
@@ -1440,7 +1450,7 @@ class vector : private containers_detail::vector_alloc_holder<A>
             //|___________|__________|_________|________________________|
             //
             //Now initialize the rest of memory with the last old values
-            ::BOOST_CONTAINER_MOVE_NAMESPACE::uninitialized_move
+            boost::interprocess::uninitialized_move
                (pos, old_finish, new_start + elemsbefore + n);
             //All new elements correctly constructed, avoid new element destruction
             this->members_.m_size = old_size + n;
@@ -1467,13 +1477,13 @@ class vector : private containers_detail::vector_alloc_holder<A>
             size_type raw_gap = s_before - (elemsbefore + n);
             //Now initialize the rest of s_before memory with the
             //first of elements after new values
-            ::BOOST_CONTAINER_MOVE_NAMESPACE::uninitialized_move(pos, pos + raw_gap, new_start + elemsbefore + n);
+            boost::interprocess::uninitialized_move(pos, pos + raw_gap, new_start + elemsbefore + n);
             //Update size since we have a contiguous buffer
             this->members_.m_size = old_size + s_before;
             //All new elements correctly constructed, avoid old element destruction
             old_values_destroyer.release();
             //Now copy remaining last objects in the old buffer begin
-            T *to_destroy = BOOST_CONTAINER_MOVE_NAMESPACE::move(pos + raw_gap, old_finish, old_start);
+            T *to_destroy = boost::interprocess::move(pos + raw_gap, old_finish, old_start);
             //Now destroy redundant elements except if they were moved and
             //they have trivial destructor after move
             size_type n_destroy =  old_finish - to_destroy;
@@ -1532,13 +1542,13 @@ class vector : private containers_detail::vector_alloc_holder<A>
             //
             //Copy the first part of old_begin to raw_mem
             T *start_n = old_start + difference_type(s_before); 
-            ::BOOST_CONTAINER_MOVE_NAMESPACE::uninitialized_move(old_start, start_n, new_start);
+            boost::interprocess::uninitialized_move(old_start, start_n, new_start);
             //The buffer is all constructed until old_end,
             //release destroyer and update size
             old_values_destroyer.release();
             this->members_.m_size = old_size + s_before;
             //Now copy the second part of old_begin overwriting himself
-            T* next = BOOST_CONTAINER_MOVE_NAMESPACE::move(start_n, pos, old_start);
+            T* next = boost::interprocess::move(start_n, pos, old_start);
             if(do_after){
                //Now copy the new_beg elements
                interf.copy_some_and_update(next, s_before, true);
@@ -1548,7 +1558,7 @@ class vector : private containers_detail::vector_alloc_holder<A>
                interf.copy_all_to(next);
                T* move_start = next + n;
                //Now displace old_end elements
-               T* move_end   = BOOST_CONTAINER_MOVE_NAMESPACE::move(pos, old_finish, move_start);
+               T* move_end   = boost::interprocess::move(pos, old_finish, move_start);
                //Destroy remaining moved elements from old_end except if
                //they have trivial destructor after being moved
                difference_type n_destroy = s_before - n;
@@ -1584,7 +1594,7 @@ class vector : private containers_detail::vector_alloc_holder<A>
             //|___________|_____|_________|__________________________|
             //
             //First copy whole old_begin and part of new to raw_mem
-            ::BOOST_CONTAINER_MOVE_NAMESPACE::uninitialized_move(old_start, pos, new_start);
+            boost::interprocess::uninitialized_move(old_start, pos, new_start);
             this->members_.m_size = elemsbefore;
 
             const size_type mid_n = difference_type(s_before) - elemsbefore;
@@ -1603,7 +1613,7 @@ class vector : private containers_detail::vector_alloc_holder<A>
                interf.copy_all_to(old_start);
                T* move_start = old_start + (n-mid_n);
                //Displace old_end
-               T* move_end = BOOST_CONTAINER_MOVE_NAMESPACE::move(pos, old_finish, move_start);
+               T* move_end = boost::interprocess::move(pos, old_finish, move_start);
                //Destroy remaining moved elements from old_end except if they
                //have trivial destructor after being moved
                difference_type n_destroy = s_before - n;
@@ -1654,10 +1664,10 @@ class vector : private containers_detail::vector_alloc_holder<A>
                //
                //First copy the part of old_end raw_mem
                T* finish_n = old_finish - difference_type(n_after);
-               ::BOOST_CONTAINER_MOVE_NAMESPACE::uninitialized_move(finish_n, old_finish, old_finish);
+               boost::interprocess::uninitialized_move(finish_n, old_finish, old_finish);
                this->members_.m_size += n_after;
                //Displace the rest of old_end to the new position
-               BOOST_CONTAINER_MOVE_NAMESPACE::move_backward(pos, finish_n, old_finish);
+               boost::interprocess::move_backward(pos, finish_n, old_finish);
                //Now overwrite with new_end
                //The new_end part is [first + (n - n_after), last)
                interf.copy_all_to(pos);
@@ -1680,7 +1690,7 @@ class vector : private containers_detail::vector_alloc_holder<A>
                //The new_end part is [first + (n - n_after), last)
                interf.uninitialized_copy_some_and_update(old_finish, elemsafter, false);
                this->members_.m_size += mid_last_dist;
-               ::BOOST_CONTAINER_MOVE_NAMESPACE::uninitialized_move(pos, old_finish, old_finish + mid_last_dist);
+               boost::interprocess::uninitialized_move(pos, old_finish, old_finish + mid_last_dist);
                this->members_.m_size += n_after - mid_last_dist;
                //Now copy the part of new_end over constructed elements
                interf.copy_all_to(pos);
@@ -1693,7 +1703,7 @@ class vector : private containers_detail::vector_alloc_holder<A>
    void priv_range_insert(const_iterator pos, InIt first, InIt last, std::input_iterator_tag)
    {
       for(;first != last; ++first){
-         this->insert(pos, BOOST_CONTAINER_MOVE_NAMESPACE::move(value_type(*first)));
+         this->insert(pos, boost::interprocess::move(value_type(*first)));
       }
    }
 
@@ -1764,14 +1774,14 @@ class vector : private containers_detail::vector_alloc_holder<A>
             T *end = std::copy(first, mid, start);
             //Initialize the remaining new elements in the uninitialized memory
             // iG std::uninitialized_copy(mid, last, end);
-            ::BOOST_CONTAINER_MOVE_NAMESPACE::uninitialized_copy_or_move(mid, last, end);
+            boost::interprocess::uninitialized_copy_or_move(mid, last, end);
             this->members_.m_size = n;
          }
       }
       else if(!ret.second){
          typename value_traits::UCopiedArrayDeallocator scoped_alloc(ret.first, this->alloc(), real_cap);
          // iG std::uninitialized_copy(first, last, containers_detail::get_pointer(ret.first));
-         ::BOOST_CONTAINER_MOVE_NAMESPACE::uninitialized_copy_or_move(first, last, containers_detail::get_pointer(ret.first));
+         boost::interprocess::uninitialized_copy_or_move(first, last, containers_detail::get_pointer(ret.first));
          scoped_alloc.release();
          //Destroy and deallocate old buffer
          if(this->members_.m_start != 0){
@@ -1801,7 +1811,7 @@ class vector : private containers_detail::vector_alloc_holder<A>
          FwdIt mid = first;
          std::advance(mid, first_count);
          // iG std::uninitialized_copy(first, mid, containers_detail::get_pointer(ret.first));
-         ::BOOST_CONTAINER_MOVE_NAMESPACE::uninitialized_copy_or_move(first, mid, containers_detail::get_pointer(ret.first));
+         boost::interprocess::uninitialized_copy_or_move(first, mid, containers_detail::get_pointer(ret.first));
 
          if(old_offset > n){
             //All old elements will be destroyed by "old_values_destroyer" 
@@ -1839,7 +1849,7 @@ class vector : private containers_detail::vector_alloc_holder<A>
 
    template <class Integer>
    void priv_assign_dispatch(Integer n, Integer val, containers_detail::true_)
-   { this->assign((size_type) n, (value_type)val); }
+   { this->assign((size_type) n, (T) val); }
 
    template <class InIt>
    void priv_assign_dispatch(InIt first, InIt last, containers_detail::false_)
@@ -1913,24 +1923,21 @@ inline void swap(vector<T, A>& x, vector<T, A>& y)
 /// @cond
 
 namespace boost {
-
-/*
+namespace interprocess {
 
 //!has_trivial_destructor_after_move<> == true_type
 //!specialization for optimizations
 template <class T, class A>
-struct has_trivial_destructor_after_move<boost::container::vector<T, A> >
+struct has_trivial_destructor_after_move<boost::interprocess_container::vector<T, A> >
 {
    static const bool value = has_trivial_destructor<A>::value;
 };
 
-*/
-
-}
+}}
 
 /// @endcond
 
-#include INCLUDE_BOOST_CONTAINER_DETAIL_CONFIG_END_HPP
+#include <boost/interprocess/containers/container/detail/config_end.hpp>
 
 #endif //   #ifndef  BOOST_CONTAINERS_CONTAINERS_VECTOR_HPP
 

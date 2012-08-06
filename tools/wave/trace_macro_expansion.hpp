@@ -2,7 +2,7 @@
     Boost.Wave: A Standard compliant C++ preprocessor library
     http://www.boost.org/
 
-    Copyright (c) 2001-2011 Hartmut Kaiser. Distributed under the Boost
+    Copyright (c) 2001-2009 Hartmut Kaiser. Distributed under the Boost
     Software License, Version 1.0. (See accompanying file
     LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 =============================================================================*/
@@ -17,7 +17,6 @@
 #include <ostream>
 #include <string>
 #include <stack>
-#include <set>
 
 #include <boost/assert.hpp>
 #include <boost/config.hpp>
@@ -31,7 +30,6 @@
 #include <boost/wave/preprocessing_hooks.hpp>
 #include <boost/wave/whitespace_handling.hpp>
 #include <boost/wave/language_support.hpp>
-#include <boost/wave/cpp_exceptions.hpp>
 
 #include "stop_watch.hpp"
 
@@ -55,9 +53,7 @@ std::string BOOST_WAVE_GETSTRING(std::ostrstream& ss)
 enum trace_flags {
     trace_nothing = 0,      // disable tracing
     trace_macros = 1,       // enable macro tracing
-    trace_macro_counts = 2, // enable invocation counting
-    trace_includes = 4,     // enable include file tracing
-    trace_guards = 8        // enable include guard tracing
+    trace_includes = 2      // enable include file tracing
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -71,11 +67,10 @@ class bad_pragma_exception :
 {
 public:
     enum error_code {
-        pragma_system_not_enabled = 
-            boost::wave::preprocess_exception::last_error_number + 1,
+        pragma_system_not_enabled = boost::wave::preprocess_exception::last_error_number + 1,
         pragma_mismatched_push_pop,
     };
-
+    
     bad_pragma_exception(char const *what_, error_code code, int line_, 
         int column_, char const *filename_) throw() 
     :   boost::wave::preprocess_exception(what_, 
@@ -84,7 +79,8 @@ public:
     {
     }
     ~bad_pragma_exception() throw() {}
-
+    
+    
     virtual char const *what() const throw()
     {
         return "boost::wave::bad_pragma_exception";
@@ -97,14 +93,14 @@ public:
     {
         return boost::wave::util::severity_remark;
     }
-
+    
     static char const *error_text(int code)
     {
         switch(code) {
         case pragma_system_not_enabled:
             return "the directive '#pragma wave system()' was not enabled, use the "
                    "-x command line argument to enable the execution of";
-
+                   
         case pragma_mismatched_push_pop:
             return "unbalanced #pragma push/pop in input file(s) for option";
         }
@@ -115,7 +111,7 @@ public:
         switch(code) {
         case pragma_system_not_enabled:
             return boost::wave::util::severity_remark;
-
+    
         case pragma_mismatched_push_pop:
             return boost::wave::util::severity_error;
         }
@@ -144,53 +140,27 @@ class trace_macro_expansion
 :   public boost::wave::context_policies::eat_whitespace<TokenT>
 {
     typedef boost::wave::context_policies::eat_whitespace<TokenT> base_type;
-
+    
 public:
-    trace_macro_expansion(
-            bool preserve_whitespace_, bool preserve_bol_whitespace_,
+    trace_macro_expansion(bool preserve_whitespace_, 
             std::ofstream &output_, std::ostream &tracestrm_, 
-            std::ostream &includestrm_, std::ostream &guardstrm_, 
-            trace_flags flags_, bool enable_system_command_, 
-            bool& generate_output_, std::string const& default_outfile_)
-    :   outputstrm(output_), tracestrm(tracestrm_), 
-        includestrm(includestrm_), guardstrm(guardstrm_), 
+            std::ostream &includestrm_, trace_flags flags_, 
+            bool enable_system_command_, bool& generate_output_,
+            std::string const& default_outfile_)
+    :   outputstrm(output_), tracestrm(tracestrm_), includestrm(includestrm_), 
         level(0), flags(flags_), logging_flags(trace_nothing), 
         enable_system_command(enable_system_command_),
         preserve_whitespace(preserve_whitespace_),
-        preserve_bol_whitespace(preserve_bol_whitespace_),
         generate_output(generate_output_),
-        default_outfile(default_outfile_),
-        emit_relative_filenames(false)
+        default_outfile(default_outfile_)
     {
+        using namespace std;    // some systems have time in namespace std
+        time(&started_at);
     }
     ~trace_macro_expansion()
     {
     }
-
-    void enable_macro_counting()  
-    { 
-        logging_flags = trace_flags(logging_flags | trace_macro_counts); 
-    }
-    std::map<std::string, std::size_t> const& get_macro_counts() const
-    {
-        return counts;
-    }
-
-    void enable_relative_names_in_line_directives(bool flag)
-    {
-        emit_relative_filenames = flag;
-    }
-    bool enable_relative_names_in_line_directives() const
-    {
-        return emit_relative_filenames;
-    }
-
-    // add a macro name, which should not be expanded at all (left untouched)
-    void add_noexpandmacro(std::string const& name)
-    {
-        noexpandmacros.insert(name);
-    }
-
+    
     ///////////////////////////////////////////////////////////////////////////
     //  
     //  The function 'expanding_function_like_macro' is called whenever a 
@@ -218,11 +188,6 @@ public:
     //  invocation (starting with the opening parenthesis and ending after the
     //  closing one).
     //
-    //  The return value defines whether the corresponding macro will be 
-    //  expanded (return false) or will be copied to the output (return true).
-    //  Note: the whole argument list is copied unchanged to the output as well
-    //        without any further processing.
-    //
     ///////////////////////////////////////////////////////////////////////////
 #if BOOST_WAVE_USE_DEPRECIATED_PREPROCESSING_HOOKS != 0
     // old signature
@@ -232,9 +197,6 @@ public:
         ContainerT const &definition,
         TokenT const &macrocall, std::vector<ContainerT> const &arguments) 
     {
-        if (enabled_macro_counting())
-            count_invocation(macrodef.get_value().c_str());
-
         if (!enabled_macro_tracing()) 
             return;
 #else
@@ -247,16 +209,6 @@ public:
         TokenT const &macrocall, std::vector<ContainerT> const &arguments,
         IteratorT const& seqstart, IteratorT const& seqend) 
     {
-        if (enabled_macro_counting() || !noexpandmacros.empty()) {
-            std::string name (macrodef.get_value().c_str());
-
-            if (noexpandmacros.find(name.c_str()) != noexpandmacros.end())
-                return true;    // do not expand this macro
-
-            if (enabled_macro_counting())
-                count_invocation(name.c_str());
-        }
-
         if (!enabled_macro_tracing()) 
             return false;
 #endif
@@ -277,8 +229,8 @@ public:
             stream << ")" << std::endl; 
             output(BOOST_WAVE_GETSTRING(stream));
             increment_level();
-        }
-
+        }        
+        
     // output definition reference
         {
         BOOST_WAVE_OSSTREAM stream;
@@ -331,7 +283,7 @@ public:
             close_trace_body();
         }
         open_trace_body();
-
+        
 #if BOOST_WAVE_USE_DEPRECIATED_PREPROCESSING_HOOKS == 0
         return false;
 #endif
@@ -360,9 +312,6 @@ public:
     void expanding_object_like_macro(TokenT const &macrodef, 
         ContainerT const &definition, TokenT const &macrocall)
     {
-        if (enabled_macro_counting())
-            count_invocation(macrodef.get_value().c_str());
-
         if (!enabled_macro_tracing()) 
             return;
 #else
@@ -373,16 +322,6 @@ public:
         TokenT const &macrodef, ContainerT const &definition, 
         TokenT const &macrocall)
     {
-        if (enabled_macro_counting() || !noexpandmacros.empty()) {
-            std::string name (macrodef.get_value().c_str());
-
-            if (noexpandmacros.find(name.c_str()) != noexpandmacros.end())
-                return true;    // do not expand this macro
-
-            if (enabled_macro_counting())
-                count_invocation(name.c_str());
-        }
-
         if (!enabled_macro_tracing()) 
             return false;
 #endif
@@ -396,7 +335,7 @@ public:
             output(BOOST_WAVE_GETSTRING(stream));
             increment_level();
         }
-
+        
     // output definition reference
         {
         BOOST_WAVE_OSSTREAM stream;
@@ -412,7 +351,7 @@ public:
         return false;
 #endif
     }
-
+    
     ///////////////////////////////////////////////////////////////////////////
     //  
     //  The function 'expanded_macro' is called whenever the expansion of a 
@@ -436,7 +375,7 @@ public:
 #endif
     {
         if (!enabled_macro_tracing()) return;
-
+        
         BOOST_WAVE_OSSTREAM stream;
         stream << boost::wave::util::impl::as_string(result) << std::endl;
         output(BOOST_WAVE_GETSTRING(stream));
@@ -474,7 +413,7 @@ public:
         output(BOOST_WAVE_GETSTRING(stream));
         close_trace_body();
         close_trace_body();
-
+        
         if (1 == get_level())
             decrement_level();
     }
@@ -538,24 +477,22 @@ public:
             if (!enable_system_command) {
             // if the #pragma wave system() directive is not enabled, throw
             // a corresponding error (actually its a remark),
-                typename ContextT::string_type msg(
-                    boost::wave::util::impl::as_string(values));
                 BOOST_WAVE_THROW_CTX(ctx, bad_pragma_exception, 
                     pragma_system_not_enabled,
-                    msg.c_str(), act_token.get_position());
+                    boost::wave::util::impl::as_string(values).c_str(), 
+                    act_token.get_position());
                 return false;
             }
-
+            
         // try to spawn the given argument as a system command and return the
         // std::cout of this process as the replacement of this _Pragma
             return interpret_pragma_system(ctx, pending, values, act_token);
         }
         if (option.get_value() == "stop") {
         // stop the execution and output the argument
-            typename ContextT::string_type msg(
-                boost::wave::util::impl::as_string(values));
-            BOOST_WAVE_THROW_CTX(ctx, boost::wave::preprocess_exception, 
-                error_directive, msg.c_str(), act_token.get_position());
+            BOOST_WAVE_THROW_CTX(ctx, preprocess_exception, error_directive,
+                boost::wave::util::impl::as_string(values).c_str(), 
+                act_token.get_position());
             return false;
         }
         if (option.get_value() == "option") {
@@ -564,80 +501,7 @@ public:
         }
         return false;
     }
-
-    ///////////////////////////////////////////////////////////////////////////
-    //
-    //  The function 'emit_line_directive' is called whenever a #line directive
-    //  has to be emitted into the generated output.
-    //
-    //  The parameter 'ctx' is a reference to the context object used for 
-    //  instantiating the preprocessing iterators by the user.
-    //
-    //  The parameter 'pending' may be used to push tokens back into the input 
-    //  stream, which are to be used instead of the default output generated
-    //  for the #line directive.
-    //
-    //  The parameter 'act_token' contains the actual #pragma token, which may 
-    //  be used for error output. The line number stored in this token can be
-    //  used as the line number emitted as part of the #line directive.
-    //
-    //  If the return value is 'false', a default #line directive is emitted
-    //  by the library. A return value of 'true' will inhibit any further 
-    //  actions, the tokens contained in 'pending' will be copied verbatim 
-    //  to the output.
-    //
-    ///////////////////////////////////////////////////////////////////////////
-    template <typename ContextT, typename ContainerT>
-    bool 
-    emit_line_directive(ContextT const& ctx, ContainerT &pending, 
-        typename ContextT::token_type const& act_token)
-    {
-        if (!need_emit_line_directives(ctx.get_language()) ||
-            !enable_relative_names_in_line_directives())
-        {
-            return false;
-        }
-
-    // emit a #line directive showing the relative filename instead
-    typename ContextT::position_type pos = act_token.get_position();
-    unsigned int column = 6;
-
-        typedef typename ContextT::token_type result_type;
-        using namespace boost::wave;
-
-        pos.set_column(1);
-        pending.push_back(result_type(T_PP_LINE, "#line", pos));
-
-        pos.set_column(column);      // account for '#line'
-        pending.push_back(result_type(T_SPACE, " ", pos));
-
-    // 21 is the max required size for a 64 bit integer represented as a 
-    // string
-    char buffer[22];
-
-        using namespace std;    // for some systems sprintf is in namespace std
-        sprintf (buffer, "%d", pos.get_line());
-
-        pos.set_column(++column);                 // account for ' '
-        pending.push_back(result_type(T_INTLIT, buffer, pos));
-        pos.set_column(column += (unsigned int)strlen(buffer)); // account for <number>
-        pending.push_back(result_type(T_SPACE, " ", pos));
-        pos.set_column(++column);                 // account for ' '
-
-    std::string file("\"");
-    boost::filesystem::path filename(
-        boost::wave::util::create_path(ctx.get_current_relative_filename().c_str()));
-
-        using boost::wave::util::impl::escape_lit;
-        file += escape_lit(boost::wave::util::native_file_string(filename)) + "\"";
-
-        pending.push_back(result_type(T_STRINGLIT, file.c_str(), pos));
-        pos.set_column(column += (unsigned int)file.size());    // account for filename
-        pending.push_back(result_type(T_GENERATEDNEWLINE, "\n", pos));
-
-        return true;
-    }
-
+        
     ///////////////////////////////////////////////////////////////////////////
     //  
     //  The function 'opened_include_file' is called whenever a file referred 
@@ -670,13 +534,13 @@ public:
     opened_include_file(ContextT const& ctx, std::string const &relname, 
         std::string const &absname, bool is_system_include) 
     {
-        std::size_t include_depth = ctx.get_iteration_depth();
+        std::size_t include_depth = ctx.get_max_include_nesting_depth();
 #endif
         if (enabled_include_tracing()) {
             // print indented filename
             for (std::size_t i = 0; i < include_depth; ++i)
                 includestrm << " ";
-
+                
             if (is_system_include)
                 includestrm << "<" << relname << "> (" << absname << ")";
             else
@@ -685,58 +549,6 @@ public:
             includestrm << std::endl;
         }
     }
-
-#if BOOST_WAVE_SUPPORT_PRAGMA_ONCE != 0
-    ///////////////////////////////////////////////////////////////////////////
-    //  
-    //  The function 'detected_include_guard' is called whenever either a 
-    //  include file is about to be added to the list of #pragma once headers.
-    //  That means this header file will not be opened and parsed again even 
-    //  if it is specified in a later #include directive.
-    //  This function is called as the result of a detected include guard 
-    //  scheme. 
-    //
-    //  The implemented heuristics for include guards detects two forms of 
-    //  include guards:
-    // 
-    //       #ifndef INCLUDE_GUARD_MACRO
-    //       #define INCLUDE_GUARD_MACRO
-    //       ...
-    //       #endif
-    // 
-    //   or
-    // 
-    //       if !defined(INCLUDE_GUARD_MACRO)
-    //       #define INCLUDE_GUARD_MACRO
-    //       ...
-    //       #endif
-    // 
-    //  note, that the parenthesis are optional (i.e. !defined INCLUDE_GUARD_MACRO
-    //  will work as well). The code allows for any whitespace, newline and single 
-    //  '#' tokens before the #if/#ifndef and after the final #endif.
-    //
-    //  The parameter 'ctx' is a reference to the context object used for 
-    //  instantiating the preprocessing iterators by the user.
-    //
-    //  The parameter 'filename' contains the file system path of the 
-    //  opened file (this is relative to the directory of the currently 
-    //  processed file or a absolute path depending on the paths given as the
-    //  include search paths).
-    //
-    //  The parameter contains the name of the detected include guard.
-    //
-    ///////////////////////////////////////////////////////////////////////////
-    template <typename ContextT>
-    void
-    detected_include_guard(ContextT const& ctx, std::string const& filename,
-        std::string const& include_guard) 
-   {
-        if (enabled_guard_tracing()) {
-            guardstrm << include_guard << ":" << std::endl
-                      << "  " << filename << std::endl;
-        }
-    }
-#endif 
 
     ///////////////////////////////////////////////////////////////////////////
     //
@@ -767,9 +579,7 @@ public:
     bool may_skip_whitespace(ContextT const &ctx, TokenT &token, 
         bool &skipped_newline)
     {
-        return this->base_type::may_skip_whitespace(
-                ctx, token, need_preserve_comments(ctx.get_language()), 
-                preserve_bol_whitespace, skipped_newline) ?
+        return this->base_type::may_skip_whitespace(ctx, token, skipped_newline) ?
             !preserve_whitespace : false;
     }
 
@@ -799,7 +609,7 @@ public:
 #endif
     }
     using base_type::throw_exception; 
-
+    
 protected:
 #if BOOST_WAVE_SUPPORT_MS_EXTENSIONS != 0
     ///////////////////////////////////////////////////////////////////////////
@@ -809,7 +619,7 @@ protected:
         using namespace boost::wave;
         if (e.get_errorcode() != preprocess_exception::ill_formed_directive)
             return false;
-
+            
         // the error string is formatted as 'severity: error: directive'
         std::string error(e.description());
         std::string::size_type p = error.find_last_of(":");
@@ -831,7 +641,7 @@ protected:
 
         if (1 == values.size()) {
         token_type const &value = values.front();
-
+        
             if (value.get_value() == "enable" ||
                 value.get_value() == "on" || 
                 value.get_value() == "1") 
@@ -860,7 +670,7 @@ protected:
                 option_str += boost::wave::util::impl::as_string(values);
                 option_str += ")";
             }
-            BOOST_WAVE_THROW_CTX(ctx, boost::wave::preprocess_exception, 
+            BOOST_WAVE_THROW_CTX(ctx, preprocess_exception, 
                 ill_formed_pragma_option, option_str.c_str(), 
                 act_token.get_position());
             return false;
@@ -869,44 +679,24 @@ protected:
     }
 
     ///////////////////////////////////////////////////////////////////////////
-    //  interpret the pragma wave option(preserve: [0|1|2|3|push|pop]) directive
+    //  interpret the pragma wave option(preserve: [0|1|2|push|pop]) directive
     template <typename ContextT>
     static bool 
     interpret_pragma_option_preserve_set(int mode, bool &preserve_whitespace, 
-        bool& preserve_bol_whitespace, ContextT &ctx)
+        ContextT &ctx)
     {
         switch(mode) {
-        // preserve no whitespace
-        case 0:
+        case 0:   
             preserve_whitespace = false;
-            preserve_bol_whitespace = false;
             ctx.set_language(
                 enable_preserve_comments(ctx.get_language(), false),
                 false);
             break;
 
-        // preserve BOL whitespace only
-        case 1:
-            preserve_whitespace = false;
-            preserve_bol_whitespace = true;
-            ctx.set_language(
-                enable_preserve_comments(ctx.get_language(), false),
-                false);
-            break;
-
-        // preserve comments and BOL whitespace only
         case 2:
-            preserve_whitespace = false;
-            preserve_bol_whitespace = true;
-            ctx.set_language(
-                enable_preserve_comments(ctx.get_language()),
-                false);
-            break;
-
-        // preserve all whitespace
-        case 3:
             preserve_whitespace = true;
-            preserve_bol_whitespace = true;
+              /* fall through */
+        case 1:
             ctx.set_language(
                 enable_preserve_comments(ctx.get_language()),
                 false);
@@ -928,23 +718,20 @@ protected:
         token_id id = util::impl::skip_whitespace(it, end);
         if (T_COLON == id)
             id = util::impl::skip_whitespace(it, end);
-
+        
         // implement push/pop
         if (T_IDENTIFIER == id) {
             if ((*it).get_value() == "push") {
             // push current preserve option onto the internal option stack
-                if (need_preserve_comments(ctx.get_language())) {
-                    if (preserve_whitespace)
-                        preserve_options.push(3);
-                    else
+                if (preserve_whitespace) {
+                    if (need_preserve_comments(ctx.get_language()))
                         preserve_options.push(2);
-                }
-                else if (preserve_bol_whitespace) {
-                    preserve_options.push(1);
+                    else
+                        preserve_options.push(1);
                 }
                 else {
                     preserve_options.push(0);
-                }
+                }                    
                 return true;
             }
             else if ((*it).get_value() == "pop") {
@@ -954,12 +741,11 @@ protected:
                         pragma_mismatched_push_pop, "preserve", 
                         act_token.get_position());
                 }
-
+                
             // pop output preserve from the internal option stack
                 bool result = interpret_pragma_option_preserve_set(
-                    preserve_options.top(), preserve_whitespace, 
-                    preserve_bol_whitespace, ctx);
-                preserve_options.pop();
+                    preserve_options.top(), preserve_whitespace, ctx);
+                line_options.pop();
                 return result;
             }
             return false;
@@ -967,14 +753,13 @@ protected:
 
         if (T_PP_NUMBER != id) 
             return false;
-
+            
         using namespace std;    // some platforms have atoi in namespace std
         return interpret_pragma_option_preserve_set(
-            atoi((*it).get_value().c_str()), preserve_whitespace, 
-            preserve_bol_whitespace, ctx);
+            atoi((*it).get_value().c_str()), preserve_whitespace, ctx);
     }
-
-    //  interpret the pragma wave option(line: [0|1|2|push|pop]) directive
+    
+    //  interpret the pragma wave option(line: [0|1|push|pop]) directive
     template <typename ContextT, typename IteratorT>
     bool 
     interpret_pragma_option_line(ContextT &ctx, IteratorT &it,
@@ -990,13 +775,7 @@ protected:
         if (T_IDENTIFIER == id) {
             if ((*it).get_value() == "push") {
             // push current line option onto the internal option stack
-                int mode = 0;
-                if (need_emit_line_directives(ctx.get_language())) {
-                    mode = 1;
-                    if (enable_relative_names_in_line_directives())
-                        mode = 2;
-                }
-                line_options.push(mode);
+                line_options.push(need_emit_line_directives(ctx.get_language()));
                 return true;
             }
             else if ((*it).get_value() == "pop") {
@@ -1006,12 +785,11 @@ protected:
                         pragma_mismatched_push_pop, "line", 
                         act_token.get_position());
                 }
-
+                
             // pop output line from the internal option stack
                 ctx.set_language(
-                    enable_emit_line_directives(ctx.get_language(), 0 != line_options.top()),
+                    enable_emit_line_directives(ctx.get_language(), line_options.top()),
                     false);
-                enable_relative_names_in_line_directives(2 == line_options.top());
                 line_options.pop();
                 return true;
             }
@@ -1020,10 +798,10 @@ protected:
 
         if (T_PP_NUMBER != id) 
             return false;
-
+            
         using namespace std;    // some platforms have atoi in namespace std
         int emit_lines = atoi((*it).get_value().c_str());
-        if (0 == emit_lines || 1 == emit_lines || 2 == emit_lines) {
+        if (0 == emit_lines || 1 == emit_lines) {
             // set the new emit #line directive mode
             ctx.set_language(
                 enable_emit_line_directives(ctx.get_language(), emit_lines),
@@ -1041,17 +819,14 @@ protected:
         ContextT& ctx, typename ContextT::token_type const &act_token)
     {
         namespace fs = boost::filesystem;
-
+        
         // ensure all directories for this file do exist
         fs::create_directories(boost::wave::util::branch_path(fpath));
 
-        // figure out, whether the file has been written to by us, if yes, we
-        // append any output to this file, otherwise we overwrite it
+        // figure out, whether the file to open was last accessed by us
         std::ios::openmode mode = std::ios::out;
-        if (fs::exists(fpath) && written_by_us.find(fpath) != written_by_us.end())
+        if (fs::exists(fpath) && fs::last_write_time(fpath) >= started_at)
             mode = (std::ios::openmode)(std::ios::out | std::ios::app);
-
-        written_by_us.insert(fpath);
 
         // close the current file
         if (outputstrm.is_open())
@@ -1060,7 +835,7 @@ protected:
         // open the new file
         outputstrm.open(fpath.string().c_str(), mode);
         if (!outputstrm.is_open()) { 
-            BOOST_WAVE_THROW_CTX(ctx, boost::wave::preprocess_exception, 
+            BOOST_WAVE_THROW_CTX(ctx, preprocess_exception, 
                 could_not_open_output_file,
                 fpath.string().c_str(), act_token.get_position());
             return false;
@@ -1086,14 +861,14 @@ protected:
     {
         using namespace boost::wave;
         namespace fs = boost::filesystem;
-
+        
         typedef typename ContextT::token_type token_type;
         typedef typename token_type::string_type string_type;
 
         token_id id = util::impl::skip_whitespace(it, end);
         if (T_COLON == id)
             id = util::impl::skip_whitespace(it, end);
-
+        
         bool result = false;
         if (T_STRINGLIT == id) {
             namespace fs = boost::filesystem;
@@ -1101,7 +876,7 @@ protected:
             string_type fname ((*it).get_value());
             fs::path fpath (boost::wave::util::create_path(
                 util::impl::unescape_lit(fname.substr(1, fname.size()-2)).c_str()));
-            fpath = boost::wave::util::complete_path(fpath, ctx.get_current_directory());
+            fpath = fs::complete(fpath, ctx.get_current_directory());
             result = interpret_pragma_option_output_open(fpath, ctx, act_token);
         }
         else if (T_IDENTIFIER == id) {
@@ -1114,8 +889,8 @@ protected:
                 if (output_options.empty() && current_outfile.empty() &&
                     !default_outfile.empty() && default_outfile != "-")
                 {
-                    current_outfile = boost::wave::util::complete_path(
-                        default_outfile, ctx.get_current_directory());
+                    current_outfile = fs::complete(default_outfile, 
+                        ctx.get_current_directory());
                 }
 
             // push current output option onto the internal option stack
@@ -1131,7 +906,7 @@ protected:
                         act_token.get_position());
                     return false;
                 }
-
+                
             // pop output option from the internal option stack
                 output_option_type const& opts = output_options.top();
                 generate_output = opts.first;
@@ -1167,98 +942,34 @@ protected:
                 result = interpret_pragma_option_output_close(true);
             }
         }
-        return result;
-    }
-
-    ///////////////////////////////////////////////////////////////////////////
-    // join all adjacent string tokens into the first one
-    template <typename StringT>
-    StringT unlit(StringT const& str)
-    {
-        return str.substr(1, str.size()-2);
-    }
-
-    template <typename StringT>
-    StringT merge_string_lits(StringT const& lhs, StringT const& rhs)
-    {
-        StringT result ("\"");
-
-        result += unlit(lhs);
-        result += unlit(rhs);
-        result += "\"";
-        return result;
-    }
-
-    template <typename ContextT, typename ContainerT>
-    void join_adjacent_string_tokens(ContextT &ctx, ContainerT const& values,
-        ContainerT& joined_values)
-    {
-        using namespace boost::wave;
-
-        typedef typename ContextT::token_type token_type;
-        typedef typename token_type::string_type string_type;
-        typedef typename ContainerT::const_iterator const_iterator;
-        typedef typename ContainerT::iterator iterator;
-
-        token_type* current = 0;
-
-        const_iterator end = values.end();
-        for (const_iterator it = values.begin(); it != end; ++it) {
-            token_id id(*it);
-
-            if (id == T_STRINGLIT) {
-                if (!current) {
-                    joined_values.push_back(*it);
-                    current = &joined_values.back();
-                }
-                else {
-                    current->set_value(merge_string_lits(
-                        current->get_value(), (*it).get_value()));
-                }
-            }
-            else if (current) {
-                typedef util::impl::next_token<const_iterator> next_token_type;
-                token_id next_id (next_token_type::peek(it, end, true));
-
-                if (next_id != T_STRINGLIT) {
-                    current = 0;
-                    joined_values.push_back(*it);
-                }
-            }
-            else {
-                joined_values.push_back(*it);
-            }
-        }
+        return result;      
     }
 
     ///////////////////////////////////////////////////////////////////////////
     //  interpret the pragma wave option() directives
     template <typename ContextT, typename ContainerT>
     bool 
-    interpret_pragma_option(ContextT &ctx, ContainerT const &cvalues, 
+    interpret_pragma_option(ContextT &ctx, ContainerT const &values, 
         typename ContextT::token_type const &act_token)
     {
         using namespace boost::wave;
-
+        
         typedef typename ContextT::token_type token_type;
         typedef typename token_type::string_type string_type;
         typedef typename ContainerT::const_iterator const_iterator;
-
-        ContainerT values;
-        join_adjacent_string_tokens(ctx, cvalues, values);
-
+        
         const_iterator end = values.end();
         for (const_iterator it = values.begin(); it != end; /**/) {
         bool valid_option = false;
-
+            
             token_type const &value = *it;
             if (value.get_value() == "preserve") {
-            // #pragma wave option(preserve: [0|1|2|3|push|pop])
+            // #pragma wave option(preserve: [0|1|2|push|pop])
                 valid_option = interpret_pragma_option_preserve(ctx, it, end, 
                     act_token);
             }
             else if (value.get_value() == "line") {
-            // #pragma wave option(line: [0|1|2|push|pop])
+            // #pragma wave option(line: [0|1|push|pop])
                 valid_option = interpret_pragma_option_line(ctx, it, end, 
                     act_token);
             }
@@ -1277,7 +988,7 @@ protected:
                     option_str += util::impl::as_string(values);
                     option_str += ")";
                 }
-                BOOST_WAVE_THROW_CTX(ctx, boost::wave::preprocess_exception, 
+                BOOST_WAVE_THROW_CTX(ctx, preprocess_exception, 
                     ill_formed_pragma_option,
                     option_str.c_str(), act_token.get_position());
                 return false;
@@ -1302,7 +1013,7 @@ protected:
         typedef typename token_type::string_type string_type;
 
         if (0 == values.size()) return false;   // ill_formed_pragma_option
-
+        
     string_type stdout_file(std::tmpnam(0));
     string_type stderr_file(std::tmpnam(0));
     string_type system_str(boost::wave::util::impl::as_string(values));
@@ -1312,14 +1023,14 @@ protected:
         if (0 != std::system(system_str.c_str())) {
         // unable to spawn the command
         string_type error_str("unable to spawn command: ");
-
+        
             error_str += native_cmd;
-            BOOST_WAVE_THROW_CTX(ctx, boost::wave::preprocess_exception, 
+            BOOST_WAVE_THROW_CTX(ctx, preprocess_exception, 
                 ill_formed_pragma_option,
                 error_str.c_str(), act_token.get_position());
             return false;
         }
-
+        
     // rescan the content of the stdout_file and insert it as the 
     // _Pragma replacement
         typedef typename ContextT::lexer_type lexer_type;
@@ -1388,7 +1099,7 @@ protected:
     int increment_level() { return ++level; }
     int decrement_level() { BOOST_ASSERT(level > 0); return --level; }
     int get_level() const { return level; }
-
+    
     bool enabled_macro_tracing() const 
     { 
         return (flags & trace_macros) && (logging_flags & trace_macros); 
@@ -1397,32 +1108,7 @@ protected:
     { 
         return (flags & trace_includes); 
     }
-    bool enabled_guard_tracing() const 
-    { 
-        return (flags & trace_guards); 
-    }
-    bool enabled_macro_counting() const 
-    { 
-        return logging_flags & trace_macro_counts; 
-    }
-
-    void count_invocation(std::string const& name)
-    {
-        typedef std::map<std::string, std::size_t>::iterator iterator;
-        typedef std::map<std::string, std::size_t>::value_type value_type;
-
-        iterator it = counts.find(name);
-        if (it == counts.end())
-        {
-            std::pair<iterator, bool> p = counts.insert(value_type(name, 0));
-            if (p.second)
-                it = p.first;
-        }
-
-        if (it != counts.end())
-            ++(*it).second;
-    }
-
+    
     void timer(TokenT const &value)
     {
         if (value.get_value() == "0" || value.get_value() == "restart") {
@@ -1450,29 +1136,22 @@ private:
     std::ofstream &outputstrm;      // main output stream
     std::ostream &tracestrm;        // trace output stream
     std::ostream &includestrm;      // included list output stream
-    std::ostream &guardstrm;        // include guard output stream
     int level;                      // indentation level
     trace_flags flags;              // enabled globally
     trace_flags logging_flags;      // enabled by a #pragma
     bool enable_system_command;     // enable #pragma wave system() command
     bool preserve_whitespace;       // enable whitespace preservation
-    bool preserve_bol_whitespace;   // enable begin of line whitespace preservation
     bool& generate_output;          // allow generated tokens to be streamed to output
     std::string const& default_outfile;         // name of the output file given on command line
     boost::filesystem::path current_outfile;    // name of the current output file 
-
+    
     stop_watch elapsed_time;        // trace timings
-    std::set<boost::filesystem::path> written_by_us;    // all files we have written to
-
+    std::time_t started_at;         // time, this process was started at
+    
     typedef std::pair<bool, boost::filesystem::path> output_option_type;
     std::stack<output_option_type> output_options;  // output option stack
     std::stack<int> line_options;       // line option stack
     std::stack<int> preserve_options;   // preserve option stack
-
-    std::map<std::string, std::size_t> counts;    // macro invocation counts
-    bool emit_relative_filenames;   // emit relative names in #line directives
-
-    std::set<std::string> noexpandmacros;   // list of macros not to expand
 };
 
 #undef BOOST_WAVE_GETSTRING

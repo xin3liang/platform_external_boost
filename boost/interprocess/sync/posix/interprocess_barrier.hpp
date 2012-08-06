@@ -10,7 +10,6 @@
 
 #include<boost/interprocess/exceptions.hpp>
 #include <boost/interprocess/detail/posix_time_types_wrk.hpp>
-#include <boost/assert.hpp>
 
 namespace boost {
 namespace interprocess {
@@ -28,7 +27,7 @@ inline barrier::barrier(unsigned int count)
 inline barrier::~barrier()
 {
    int res = pthread_barrier_destroy(&m_barrier);
-   BOOST_ASSERT(res  == 0);(void)res;
+   assert(res  == 0);(void)res;
 }
 
 inline bool barrier::wait()

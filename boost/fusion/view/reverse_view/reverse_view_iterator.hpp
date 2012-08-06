@@ -17,9 +17,6 @@
 #include <boost/fusion/view/reverse_view/detail/advance_impl.hpp>
 #include <boost/fusion/view/reverse_view/detail/distance_impl.hpp>
 #include <boost/fusion/view/reverse_view/detail/value_of_impl.hpp>
-#include <boost/fusion/view/reverse_view/detail/deref_data_impl.hpp>
-#include <boost/fusion/view/reverse_view/detail/value_of_data_impl.hpp>
-#include <boost/fusion/view/reverse_view/detail/key_of_impl.hpp>
 #include <boost/type_traits/is_base_of.hpp>
 #include <boost/static_assert.hpp>
 
@@ -41,14 +38,10 @@ namespace boost { namespace fusion
                 bidirectional_traversal_tag
               , category>::value));
 
-        reverse_view_iterator(First const& in_first)
-            : first(converter::call(in_first)) {}
+        reverse_view_iterator(First const& first)
+            : first(converter::call(first)) {}
 
         first_type first;
-
-    private:
-        // silence MSVC warning C4512: assignment operator could not be generated
-        reverse_view_iterator& operator= (reverse_view_iterator const&);
     };
 }}
 
